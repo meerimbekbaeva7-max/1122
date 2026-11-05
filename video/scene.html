@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ky">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: Disp; src: local("Inter Display Black"), local("InterDisplay-Black"); font-weight: 900; }
+  @font-face { font-family: Disp; src: local("Inter Display ExtraBold"), local("InterDisplay-ExtraBold"); font-weight: 800; }
+  @font-face { font-family: Disp; src: local("Inter Display SemiBold"), local("InterDisplay-SemiBold"); font-weight: 600; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #05060a; }
+  body { font-family: Disp, Inter, sans-serif; color: #fff; }
+  #stage { position: absolute; inset: 0; overflow: hidden; }
+  canvas { position: absolute; inset: 0; }
+  .layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 80px; }
+  .h1 { font-weight: 900; font-size: 112px; line-height: 1.02; letter-spacing: -3px; }
+  .h2 { font-weight: 800; font-size: 76px; line-height: 1.08; letter-spacing: -1.5px; }
+  .sub { font-weight: 600; font-size: 44px; color: #b9c0d4; letter-spacing: 0.5px; }
+  .w { display: inline-block; will-change: transform, opacity, filter; }
+  .red { color: #ff3b4e; }
+  .gold { background: linear-gradient(100deg,#ffe29a,#ffb627 45%,#ff8a00); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .green { color: #3dffa2; }
+
+  /* scene 0 */
+  .stamp { position: absolute; font-weight: 900; font-size: 92px; color: #ff3b4e; border: 12px solid #ff3b4e; border-radius: 22px; padding: 6px 34px; letter-spacing: 4px; text-shadow: 0 0 40px rgba(255,59,78,.6); box-shadow: 0 0 60px rgba(255,59,78,.35), inset 0 0 30px rgba(255,59,78,.25); }
+  .try { font-weight: 800; font-size: 40px; color: #ff8792; letter-spacing: 6px; margin-bottom: 20px; }
+
+  /* scene 1 */
+  .loss { position: relative; font-weight: 900; font-size: 128px; letter-spacing: -2px; margin: 14px 0; }
+  .loss .strike { position: absolute; left: -4%; top: 52%; height: 16px; width: 108%; background: #ff3b4e; transform-origin: left center; border-radius: 8px; box-shadow: 0 0 30px #ff3b4e; }
+  .loss small { display: block; font-size: 40px; font-weight: 600; color: #8e97ad; letter-spacing: 8px; }
+
+  /* scene 3 */
+  .check { width: 300px; height: 300px; margin-bottom: 60px; }
+  .card { width: 720px; height: 440px; border-radius: 40px; margin-top: 70px; background: linear-gradient(135deg,#17243f,#0d1322 60%,#132a2a); border: 2px solid rgba(255,255,255,.14); box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 80px rgba(61,255,162,.18); position: relative; overflow: hidden; display: flex; align-items: center; padding: 50px; gap: 46px; text-align: left; }
+  .card .shine { position: absolute; top: -50%; width: 160px; height: 200%; background: linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent); transform: rotate(20deg); }
+  .card .cat { width: 210px; height: 210px; border-radius: 34px; background: linear-gradient(135deg,#3dffa2,#14b8a6); color: #052018; font-size: 150px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex: none; }
+  .card .t1 { font-size: 46px; font-weight: 900; letter-spacing: 1px; }
+  .card .t2 { font-size: 34px; font-weight: 600; color: #3dffa2; margin-top: 14px; letter-spacing: 3px; }
+
+  /* scene 4 */
+  .punch { font-weight: 900; font-size: 210px; letter-spacing: -6px; line-height: 1; margin: 10px 0; }
+
+  /* scene 5 */
+  .btn { margin-top: 90px; position: relative; display: flex; align-items: center; gap: 26px; padding: 44px 90px; border-radius: 999px; font-size: 76px; font-weight: 900; color: #1a1000; background: linear-gradient(100deg,#ffe29a,#ffb627 45%,#ff8a00); box-shadow: 0 0 0 0 rgba(255,182,39,.6), 0 30px 90px rgba(255,138,0,.45); }
+  .ring { position: absolute; inset: 0; border-radius: 999px; border: 6px solid #ffb627; }
+  .hand { position: absolute; width: 150px; height: 150px; }
+  .flash { position: absolute; inset: 0; background: #fff; pointer-events: none; }
+  .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.75) 100%); pointer-events: none; }
+  .bars { position: absolute; left: 0; right: 0; height: 0; background: #000; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg" width="1080" height="1920"></canvas>
+
+  <!-- 0: problem -->
+  <div class="layer" id="s0">
+    <div class="try" id="tryLbl">ЭКЗАМЕН</div>
+    <div class="h1" id="s0h"><span class="w">Кайра-кайра</span> <span class="w">тапшыра</span> <span class="w red">албай</span> <span class="w red">жатасызбы?</span></div>
+    <div class="stamp" id="st0" style="top:300px;left:110px">ӨТПӨДҮ</div>
+    <div class="stamp" id="st1" style="top:1440px;right:90px">ӨТПӨДҮ</div>
+    <div class="stamp" id="st2" style="top:1600px;left:150px">ӨТПӨДҮ</div>
+  </div>
+
+  <!-- 1: pain -->
+  <div class="layer" id="s1">
+    <div class="loss" id="l0"><small>КЕТТИ</small>Убакыт<div class="strike"></div></div>
+    <div class="loss" id="l1"><small>КЕТТИ</small>Акча<div class="strike"></div></div>
+    <div class="loss" id="l2"><small>КЕТТИ</small>Нерв<div class="strike"></div></div>
+  </div>
+
+  <!-- 2: turn -->
+  <div class="layer" id="s2">
+    <div class="h1" id="s2a">Чарчадыңызбы?</div>
+    <div class="h2" id="s2b" style="margin-top:60px"><span class="w">Эми</span> <span class="w gold">бизге</span> <span class="w gold">кайрылыңыз!</span></div>
+  </div>
+
+  <!-- 3: solution -->
+  <div class="layer" id="s3">
+    <svg class="check" id="chk" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="52" fill="none" stroke="#3dffa2" stroke-width="7" stroke-linecap="round" id="chkC" style="filter:drop-shadow(0 0 12px #3dffa2)"/>
+      <path d="M36 62 L53 78 L85 44" fill="none" stroke="#3dffa2" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" id="chkP" style="filter:drop-shadow(0 0 10px #3dffa2)"/>
+    </svg>
+    <div class="h2" id="s3h"><span class="w">Экзаменди</span> <span class="w green">тез</span> <span class="w">жана</span> <span class="w green">ишенимдүү</span> <span class="w">тапшырасыз</span></div>
+    <div class="card" id="card">
+      <div class="shine" id="shine"></div>
+      <div class="cat">B</div>
+      <div><div class="t1">АЙДООЧУЛУК<br>КҮБӨЛҮК</div><div class="t2">✓ ЭКЗАМЕН ӨТТҮ</div></div>
+    </div>
+  </div>
+
+  <!-- 4: benefits -->
+  <div class="layer" id="s4">
+    <div class="punch" id="p0">ТЕЗ.</div>
+    <div class="punch gold" id="p1">ТАК.</div>
+    <div class="punch green" id="p2" style="font-size:150px;letter-spacing:-4px">ЖЫЙЫНТЫК.</div>
+  </div>
+
+  <!-- 5: CTA -->
+  <div class="layer" id="s5">
+    <div class="sub" id="s5s">АЗЫР ЭЛЕ</div>
+    <div class="h1" id="s5h" style="margin-top:24px">Баскычты <span class="gold">басыңыз</span></div>
+    <div class="btn" id="btn"><div class="ring" id="ring"></div>Кененирээк <span id="arrow">→</span></div>
+    <svg class="hand" id="hand" viewBox="0 0 64 64"><path d="M26 8c2.8 0 5 2.2 5 5v15l1.6-.5c2.6-.8 5.2.8 5.8 3.4l.2.9 1.4-.3c2.6-.6 5.1 1 5.7 3.6l.2.9 1-.1c2.7-.3 5.1 1.6 5.4 4.3l.7 7.8c.6 6.4-2.8 12.4-8.6 15.1L41 64H25l-11-15.8c-1.6-2.3-1.1-5.4 1.1-7.1 2.1-1.6 5.1-1.4 7 .5L21 42V13c0-2.8 2.2-5 5-5z" fill="#fff" stroke="#111" stroke-width="2.4"/></svg>
+  </div>
+
+  <div class="vignette"></div>
+  <div class="bars" id="barT" style="top:0"></div>
+  <div class="bars" id="barB" style="bottom:0"></div>
+  <div class="flash" id="flash" style="opacity:0"></div>
+</div>
+
+<script>
+// Timeline: per-scene [start, end] in seconds; replaced at build time from the voice timings.
+window.TL = window.TL || [[0,7.2],[7.2,11.6],[11.6,16.6],[16.6,24.2],[24.2,28.6],[28.6,35]];
+const TURN = 1.8; // seconds into scene 2 where the mood flips to the solution
+
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const easeOut = x => 1 - Math.pow(1 - x, 4);
+const easeInOut = x => x < .5 ? 8 * x ** 4 : 1 - Math.pow(-2 * x + 2, 4) / 2;
+const back = x => { const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const lerp = (a, b, x) => a + (b - a) * x;
+// deterministic noise
+function rnd(i) { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+
+function set(el, o) {
+  const s = el.style;
+  if ('op' in o) s.opacity = o.op;
+  const tf = [];
+  if ('x' in o || 'y' in o) tf.push(`translate(${o.x || 0}px,${o.y || 0}px)`);
+  if ('sc' in o) tf.push(`scale(${o.sc})`);
+  if ('rot' in o) tf.push(`rotate(${o.rot}deg)`);
+  if ('sx' in o) tf.push(`scaleX(${o.sx})`);
+  s.transform = tf.join(' ');
+  if ('blur' in o) s.filter = `blur(${o.blur}px)`;
+}
+
+// scene visibility with in/out transitions
+function sceneAlpha(t, i) {
+  const [a, b] = TL[i];
+  const inT = i === 0 ? 1 : easeOut(prog(t, a, a + .35));
+  const outT = i === TL.length - 1 ? 1 : 1 - easeInOut(prog(t, b - .3, b));
+  return Math.min(inT, outT);
+}
+
+function words(container, t, start, step, dur = .55) {
+  [...container.querySelectorAll('.w')].forEach((w, k) => {
+    const p = easeOut(prog(t, start + k * step, start + k * step + dur));
+    set(w, { op: p, y: lerp(90, 0, p), blur: lerp(18, 0, p), sc: lerp(1.15, 1, p) });
+  });
+}
+
+// ---------- background canvas: cinematic road + light streaks + grain ----------
+const cv = $('bg'), g = cv.getContext('2d');
+const W = 1080, H = 1920;
+const grain = document.createElement('canvas'); grain.width = 270; grain.height = 480;
+const gg = grain.getContext('2d');
+
+function hueFor(t) {
+  // red mood for the problem, turns gold/green for the solution
+  const turn = easeInOut(prog(t, TL[2][0] + TURN, TL[2][0] + TURN + 1.0));
+  return turn;
+}
+
+function drawBg(t, f) {
+  const turn = hueFor(t);
+  const c1 = [lerp(70, 10, turn), lerp(8, 40, turn), lerp(16, 46, turn)];
+  const grd = g.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, '#05060a');
+  grd.addColorStop(.55, `rgb(${c1.map(Math.round).join(',')})`);
+  grd.addColorStop(1, '#020203');
+  g.fillStyle = grd; g.fillRect(0, 0, W, H);
+
+  // moving glow orbs
+  for (let i = 0; i < 4; i++) {
+    const x = W * (.2 + .6 * rnd(i)) + Math.sin(t * .4 + i * 2) * 160;
+    const y = H * (.15 + .7 * rnd(i + 9)) + Math.cos(t * .3 + i) * 200;
+    const r = 520 + 140 * Math.sin(t * .7 + i);
+    const col = turn < .5
+      ? `rgba(255,${40 + i * 15},${60 + i * 10},${.16 * (1 - turn * 2) + .02})`
+      : `rgba(${i % 2 ? 61 : 255},${i % 2 ? 255 : 182},${i % 2 ? 162 : 39},${.14 * (turn * 2 - 1) + .02})`;
+    const rg = g.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, col); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, W, H);
+  }
+
+  // perspective road, horizon at 62%
+  const hy = H * .62, vx = W / 2 + Math.sin(t * .35) * 40;
+  g.save();
+  g.globalAlpha = .55;
+  g.strokeStyle = 'rgba(255,255,255,.10)'; g.lineWidth = 3;
+  for (let k = -6; k <= 6; k++) {
+    g.beginPath(); g.moveTo(vx, hy); g.lineTo(W / 2 + k * 420, H + 40); g.stroke();
+  }
+  // dashed centre line racing toward camera
+  const speed = turn > .5 ? 1.9 : 0.8;
+  for (let n = 0; n < 14; n++) {
+    let z = ((n / 14) + t * speed * .18) % 1;   // 0 far -> 1 near
+    const z2 = Math.min(1, z + .035);
+    const y1 = hy + (H - hy) * z * z, y2 = hy + (H - hy) * z2 * z2;
+    const w1 = 4 + 30 * z * z, w2 = 4 + 30 * z2 * z2;
+    g.fillStyle = turn > .5 ? `rgba(255,200,80,${.25 + .6 * z})` : `rgba(255,255,255,${.12 + .4 * z})`;
+    g.beginPath();
+    g.moveTo(vx - w1 / 2 + (W / 2 - vx) * z, y1); g.lineTo(vx + w1 / 2 + (W / 2 - vx) * z, y1);
+    g.lineTo(vx + w2 / 2 + (W / 2 - vx) * z2, y2); g.lineTo(vx - w2 / 2 + (W / 2 - vx) * z2, y2);
+    g.fill();
+  }
+  g.restore();
+
+  // light streaks (bokeh traffic)
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 26; i++) {
+    const sp = .12 + rnd(i) * .3;
+    const p = (rnd(i + 40) + t * sp) % 1;
+    const x = (rnd(i + 80) * W * 1.4) - W * .2 + p * 300;
+    const y = H * (.08 + rnd(i + 120) * .5);
+    const len = 140 + rnd(i) * 300;
+    const a = Math.sin(p * Math.PI) * .5;
+    const lg = g.createLinearGradient(x, y, x + len, y - len * .25);
+    const warm = turn > .5 || i % 3 === 0;
+    lg.addColorStop(0, 'rgba(0,0,0,0)');
+    lg.addColorStop(1, warm ? `rgba(255,190,90,${a})` : `rgba(255,70,90,${a})`);
+    g.strokeStyle = lg; g.lineWidth = 2 + rnd(i + 3) * 4;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + len, y - len * .25); g.stroke();
+  }
+  // dust particles
+  for (let i = 0; i < 70; i++) {
+    const x = (rnd(i + 200) * W + t * 20 * (rnd(i) - .5) * 4 + W) % W;
+    const y = (rnd(i + 300) * H - t * (15 + 40 * rnd(i + 5)) + H * 10) % H;
+    const r = .8 + rnd(i + 7) * 2.6;
+    g.fillStyle = `rgba(255,255,255,${.15 + .35 * rnd(i + 11)})`;
+    g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill();
+  }
+  g.restore();
+
+  // film grain
+  const id = gg.createImageData(270, 480); const d = id.data;
+  let seed = f * 9301 + 49297;
+  for (let i = 0; i < d.length; i += 4) {
+    seed = (seed * 9301 + 49297) % 233280; const v = (seed / 233280) * 255;
+    d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 20;
+  }
+  gg.putImageData(id, 0, 0);
+  g.imageSmoothingEnabled = false;
+  g.drawImage(grain, 0, 0, W, H);
+}
+
+// ---------- per-frame render ----------
+window.renderAt = function (t, f) {
+  drawBg(t, f);
+
+  // global camera drift
+  const stage = $('stage');
+    let sx = 0, sy = 0;
+  // impact shakes for the stamps and the "tired?" beat
+  const hits = [TL[0][0] + 1.6, TL[0][0] + 2.4, TL[0][0] + 3.2, TL[2][0] + .3, TL[4][0] + .2, TL[4][0] + 1.5, TL[4][0] + 2.8];
+  hits.forEach((h, i) => { const k = prog(t, h, h + .35); if (k > 0 && k < 1) { const a = (1 - k) * 18; sx += Math.sin(t * 90 + i) * a; sy += Math.cos(t * 70 + i) * a; } });
+  stage.style.transform = `translate(${sx}px,${sy}px) scale(${1.02 + .02 * Math.sin(t * .5)})`;
+
+  // letterbox bars breathe in for the "cinematic" open and close
+  const bar = 130 * (1 - easeOut(prog(t, 0, 1.2))) + 110 * easeInOut(prog(t, TL[5][1] - .6, TL[5][1]));
+  $('barT').style.height = $('barB').style.height = bar + 'px';
+
+  // ---- scene 0
+  {
+    const el = $('s0'), A = sceneAlpha(t, 0), [a] = TL[0];
+    el.style.opacity = A;
+    const tp = easeOut(prog(t, a + .1, a + .7));
+    set($('tryLbl'), { op: tp, y: lerp(-30, 0, tp) });
+    $('tryLbl').style.letterSpacing = lerp(30, 6, tp) + 'px';
+    words($('s0h'), t, a + .25, .18);
+    ['st0', 'st1', 'st2'].forEach((id, i) => {
+      const h = a + 1.6 + i * .8, p = prog(t, h - .18, h);
+      set($(id), { op: p > 0 ? 1 : 0, sc: lerp(3.2, 1, easeOut(p)), rot: [-14, 10, -6][i], blur: lerp(12, 0, p) });
+    });
+  }
+  // ---- scene 1
+  {
+    const el = $('s1'), A = sceneAlpha(t, 1), [a, b] = TL[1];
+    el.style.opacity = A;
+    const span = (b - a - .6) / 3;
+    ['l0', 'l1', 'l2'].forEach((id, i) => {
+      const s = a + .1 + i * span;
+      const p = easeOut(prog(t, s, s + .45));
+      set($(id), { op: p, x: lerp(i % 2 ? 300 : -300, 0, p), blur: lerp(20, 0, p) });
+      const k = easeInOut(prog(t, s + .55, s + .9));
+      $(id).querySelector('.strike').style.transform = `scaleX(${k})`;
+      $(id).style.color = k > .5 ? '#6b7285' : '#fff';
+    });
+  }
+  // ---- scene 2
+  {
+    const el = $('s2'), A = sceneAlpha(t, 2), [a] = TL[2];
+    el.style.opacity = A;
+    const p = prog(t, a, a + .4);
+    const shake = t > a + .2 && t < a + 1 ? Math.sin(t * 60) * 10 * (1 - prog(t, a + .2, a + 1)) : 0;
+    set($('s2a'), { op: easeOut(p), sc: lerp(1.6, 1, back(p)), x: shake, blur: lerp(14, 0, p) });
+    // glitch split on the turn
+    const gl = prog(t, a + TURN - .15, a + TURN + .15);
+    $('s2a').style.textShadow = gl > 0 && gl < 1 ? `${12 * (1 - gl)}px 0 #ff3b4e, ${-12 * (1 - gl)}px 0 #3dffa2` : 'none';
+    words($('s2b'), t, a + TURN, .22, .6);
+    $('flash').style.opacity = Math.max(0, .55 * (1 - prog(t, a + TURN - .1, a + TURN + .4))) * (t > a + TURN - .1 ? 1 : 0);
+  }
+  // ---- scene 3
+  {
+    const el = $('s3'), A = sceneAlpha(t, 3), [a, b] = TL[3];
+    el.style.opacity = A;
+    const c = easeInOut(prog(t, a + .1, a + .8)), pk = easeOut(prog(t, a + .6, a + 1.1));
+    const C = 2 * Math.PI * 52;
+    $('chkC').setAttribute('stroke-dasharray', C); $('chkC').setAttribute('stroke-dashoffset', C * (1 - c));
+    $('chkP').setAttribute('stroke-dasharray', 80); $('chkP').setAttribute('stroke-dashoffset', 80 * (1 - pk));
+    set($('chk'), { sc: lerp(.6, 1, back(prog(t, a, a + .6))), op: prog(t, a, a + .2) });
+    words($('s3h'), t, a + .5, .16);
+    const cp = prog(t, a + 1.6, a + 2.4);
+    const cf = Math.sin(t * 1.4) * 4;
+    set($('card'), { op: easeOut(cp), y: lerp(220, 0, easeOut(cp)) + cf, rot: lerp(-10, -2, easeOut(cp)), sc: lerp(.85, 1, back(cp)) });
+    $('card').style.transform += ` perspective(1200px) rotateY(${lerp(40, 8, easeOut(cp)) + Math.sin(t) * 4}deg)`;
+    const sh = prog(t, a + 2.5, a + 3.4);
+    $('shine').style.left = lerp(-200, 900, sh) + 'px';
+  }
+  // ---- scene 4
+  {
+    const el = $('s4'), A = sceneAlpha(t, 4), [a] = TL[4];
+    el.style.opacity = A;
+    ['p0', 'p1', 'p2'].forEach((id, i) => {
+      const h = a + .05 + i * 1.3, p = prog(t, h, h + .3);
+      set($(id), { op: easeOut(p), sc: lerp(2.6, 1, easeOut(p)), blur: lerp(24, 0, p) });
+    });
+  }
+  // ---- scene 5
+  {
+    const el = $('s5'), A = sceneAlpha(t, 5), [a, b] = TL[5];
+    el.style.opacity = A;
+    const p0 = easeOut(prog(t, a + .05, a + .5));
+    set($('s5s'), { op: p0, y: lerp(-40, 0, p0) });
+    $('s5s').style.letterSpacing = lerp(40, 10, p0) + 'px';
+    const p1 = easeOut(prog(t, a + .2, a + .75));
+    set($('s5h'), { op: p1, y: lerp(80, 0, p1), blur: lerp(16, 0, p1) });
+    const pb = prog(t, a + .6, a + 1.1);
+    const pulse = 1 + .045 * Math.sin((t - a) * 6.5) * prog(t, a + 1.1, a + 1.5);
+    // tap: button squash at tapT
+    const tapT = a + 3.0, tapK = prog(t, tapT, tapT + .25);
+    const squash = tapK > 0 && tapK < 1 ? 1 - .08 * Math.sin(tapK * Math.PI) : 1;
+    set($('btn'), { op: easeOut(pb), sc: lerp(.4, 1, back(pb)) * pulse * squash });
+    const rp = ((t - a - 1.1) % 1.1) / 1.1;
+    $('ring').style.opacity = t > a + 1.1 ? (1 - rp) * .9 : 0;
+    $('ring').style.transform = `scale(${1 + rp * .35}, ${1 + rp * .9})`;
+    $('arrow').style.display = 'inline-block';
+    $('arrow').style.transform = `translateX(${Math.sin((t - a) * 8) * 12}px)`;
+    // hand glides in and taps
+    const hp = easeInOut(prog(t, a + 1.4, tapT));
+    const btnR = $('btn').getBoundingClientRect();
+    const hx = lerp(W + 100, btnR.left + btnR.width * .62, hp), hy = lerp(H + 100, btnR.top + btnR.height * .55, hp);
+    const press = tapK > 0 && tapK < 1 ? .85 + .15 * (1 - Math.sin(tapK * Math.PI)) : 1;
+    $('hand').style.left = hx + 'px'; $('hand').style.top = hy + 'px';
+    $('hand').style.transform = `scale(${press}) rotate(-18deg)`;
+    $('hand').style.opacity = prog(t, a + 1.4, a + 1.6);
+    if (tapK > 0) {
+      const r = prog(t, tapT, tapT + .6);
+      $('btn').style.boxShadow = `0 0 0 ${r * 80}px rgba(255,182,39,${.5 * (1 - r)}), 0 30px 90px rgba(255,138,0,.45)`;
+    }
+  }
+};
+
+if (!window.__RENDER__) {
+  // live preview loop in a normal browser
+  const t0 = performance.now();
+  (function loop() { const t = ((performance.now() - t0) / 1000) % TL[5][1]; renderAt(t, Math.floor(t * 30)); requestAnimationFrame(loop); })();
+}
+</script>
+</body>
+</html>
