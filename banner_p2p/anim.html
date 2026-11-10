@@ -1,0 +1,97 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;font-family:"Inter Display",Inter,sans-serif;color:#fff}
+.b{position:relative;overflow:hidden;background:radial-gradient(ellipse at 70% 20%,#123a2c 0%,#07110d 45%,#020403 100%)}
+.v{width:1080px;height:1920px}.s{width:1080px;height:1080px}
+canvas{position:absolute;inset:0}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.8) 100%)}
+.tag{display:inline-flex;align-items:center;gap:14px;padding:14px 28px;border-radius:999px;background:rgba(61,255,162,.12);border:2px solid rgba(61,255,162,.5);color:#3dffa2;font-weight:800;font-size:34px;letter-spacing:4px}
+.dot{width:14px;height:14px;border-radius:50%;background:#3dffa2;box-shadow:0 0 18px #3dffa2}
+h1{font-weight:900;letter-spacing:-4px;line-height:.95}
+.g{background:linear-gradient(100deg,#b6ffd9,#3dffa2 45%,#14b8a6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.y{background:linear-gradient(100deg,#ffe29a,#ffb627 45%,#ff8a00);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:#b9c7c0;font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:22px;border-radius:999px;font-weight:900;color:#1a1000;background:linear-gradient(100deg,#ffe29a,#ffb627 45%,#ff8a00);box-shadow:0 0 0 14px rgba(255,182,39,.18),0 30px 90px rgba(255,138,0,.5)}
+.phone{position:absolute;border-radius:70px;background:#0a0f0d;border:3px solid #26332d;box-shadow:0 60px 140px rgba(0,0,0,.8),0 0 120px rgba(61,255,162,.18);overflow:hidden}
+.scr{position:absolute;inset:18px;border-radius:54px;background:linear-gradient(180deg,#0d1814,#07100c);padding:44px 34px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:22px 24px;border-radius:22px;background:rgba(255,255,255,.04);margin-bottom:16px;font-weight:700}
+.buy{color:#3dffa2}.sell{color:#ff5b6b}
+.pill{padding:8px 18px;border-radius:12px;font-weight:900}
+.pb{background:#3dffa2;color:#05221a}.ps{background:#ff5b6b;color:#2a0508}
+.spread{margin-top:26px;padding:26px;border-radius:26px;background:linear-gradient(135deg,rgba(61,255,162,.18),rgba(20,184,166,.08));border:2px solid rgba(61,255,162,.4);text-align:center}
+.disc{position:absolute;left:0;right:0;text-align:center;color:#5d6b65;font-weight:600}
+
+.a-tag{animation:tagIn .6s cubic-bezier(.2,.9,.3,1) both .1s}
+.a-h1{animation:h1In .8s cubic-bezier(.2,.9,.3,1) both .3s}
+.a-sub{animation:fadeUp .6s ease-out both 1s}
+.a-li{animation:liIn .5s cubic-bezier(.2,.9,.3,1.3) both}
+.a-phone{animation:phoneIn 1s cubic-bezier(.2,.9,.3,1) both .5s, float 3s ease-in-out infinite 1.5s}
+.a-btn{animation:btnIn .6s cubic-bezier(.3,1.6,.5,1) both 2.2s, pulse 1s ease-in-out infinite 2.8s}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;animation:flash .5s ease-out .3s both;pointer-events:none}
+.flare{position:absolute;left:-40%;top:560px;width:180%;height:8px;background:linear-gradient(90deg,transparent,rgba(150,220,255,.9),transparent);filter:blur(2px);box-shadow:0 0 40px 12px rgba(120,200,255,.35);animation:sweep 3s ease-in-out infinite 1s;opacity:0}
+.spr{animation:spr 1s ease-in-out infinite}
+@keyframes tagIn{from{opacity:0;transform:translateY(-40px);letter-spacing:30px}to{opacity:1;transform:none}}
+@keyframes h1In{from{opacity:0;transform:scale(1.5);filter:blur(30px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:none}}
+@keyframes liIn{from{opacity:0;transform:translateX(-120px)}to{opacity:1;transform:none}}
+@keyframes phoneIn{from{opacity:0;transform:translate(400px,200px) rotate(18deg) scale(.8)}to{opacity:1;transform:rotate(-8deg)}}
+@keyframes float{0%,100%{transform:rotate(-8deg) translateY(0)}50%{transform:rotate(-6deg) translateY(-24px)}}
+@keyframes btnIn{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,182,39,.5),0 30px 90px rgba(255,138,0,.5)}50%{transform:scale(1.06);box-shadow:0 0 0 34px rgba(255,182,39,0),0 30px 90px rgba(255,138,0,.6)}}
+@keyframes flash{0%{opacity:.6}100%{opacity:0}}
+@keyframes sweep{0%{opacity:0;transform:translateX(-30%)}50%{opacity:1}100%{opacity:0;transform:translateX(30%)}}
+@keyframes spr{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+</style></head><body>
+
+<!-- VERTICAL -->
+<div class="b v" id="v">
+ <canvas id="cv" width="1080" height="1920"></canvas>
+ <div class="phone a-phone" style="width:560px;height:1000px;right:-60px;top:700px">
+  <div class="scr" id="ps1"></div>
+ </div>
+ <div class="flare"></div><div class="vig"></div><div class="flash"></div>
+ <div style="position:absolute;left:80px;top:150px;right:80px">
+  <div class="tag a-tag"><span class="dot"></span>P2P-АРБИТРАЖ</div>
+  <h1 class="a-h1" style="font-size:180px;margin-top:50px">Рабочие<br><span class="g">P2P-</span><br><span class="g">связки</span></h1>
+  <p class="sub a-sub" style="font-size:46px;margin-top:40px;max-width:560px;line-height:1.25">Покупай дешевле —<br>продавай дороже.<br>Покажем, где спред.</p>
+  <div style="margin-top:50px;display:flex;flex-direction:column;gap:22px;font-size:40px;font-weight:800">
+   <div class="a-li" style="animation-delay:1.3s">✅ Готовые связки</div><div class="a-li" style="animation-delay:1.5s">✅ Разбор спреда</div><div class="a-li" style="animation-delay:1.7s">✅ Поддержка 24/7</div>
+  </div>
+ </div>
+ <div style="position:absolute;left:0;right:0;bottom:200px;text-align:center">
+  <div class="btn a-btn" style="padding:44px 100px;font-size:78px">Подробнее →</div>
+ </div>
+ <div class="disc" style="bottom:90px;font-size:26px">Торговля криптовалютой связана с рисками. Доход не гарантирован.</div>
+</div>
+
+<script>
+// generic P2P order screen (no exchange branding)
+const screen=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px"><div style="font-size:40px;font-weight:900">P2P · USDT</div><div style="font-size:26px;color:#3dffa2;font-weight:800">● LIVE</div></div>
+<div style="font-size:24px;color:#6f8079;font-weight:700;letter-spacing:3px;margin-bottom:14px">ПОКУПКА</div>
+<div class="row"><span>89.12 сом</span><span class="pill pb">BUY</span></div>
+<div class="row"><span>89.18 сом</span><span class="pill pb">BUY</span></div>
+<div style="font-size:24px;color:#6f8079;font-weight:700;letter-spacing:3px;margin:28px 0 14px">ПРОДАЖА</div>
+<div class="row"><span>90.45 сом</span><span class="pill ps">SELL</span></div>
+<div class="row"><span>90.39 сом</span><span class="pill ps">SELL</span></div>
+<div class="spread"><div style="font-size:26px;color:#9fb5ab;font-weight:700;letter-spacing:3px">СПРЕД</div><div style="font-size:84px;font-weight:900;display:inline-block" class="y spr">+1.4%</div></div>`;
+document.getElementById('ps1').innerHTML=screen;
+function rnd(i){const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)}
+function chart(id,W,H,n,top,h){
+ const c=document.getElementById(id).getContext('2d');
+ // grid
+ c.strokeStyle='rgba(61,255,162,.06)';c.lineWidth=2;
+ for(let x=0;x<W;x+=90){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke()}
+ for(let y=0;y<H;y+=90){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke()}
+ // candles with an uptrend
+ let p=0.75;const cw=W/n;const pts=[];
+ for(let i=0;i<n;i++){const o=p;p=p-0.022+(rnd(i)-.45)*0.12;const cl=p;const hi=Math.min(o,cl)-rnd(i+50)*.03,lo=Math.max(o,cl)+rnd(i+90)*.03;
+  const up=cl<o;const x=i*cw+cw/2;const Y=v=>top+v*h;
+  c.strokeStyle=up?'rgba(61,255,162,.55)':'rgba(255,91,107,.45)';c.lineWidth=3;c.beginPath();c.moveTo(x,Y(hi));c.lineTo(x,Y(lo));c.stroke();
+  c.fillStyle=up?'rgba(61,255,162,.5)':'rgba(255,91,107,.4)';c.fillRect(x-cw*.32,Y(Math.min(o,cl)),cw*.64,Math.max(4,Math.abs(cl-o)*h));pts.push([x,Y(cl)]);}
+ // glow trend line
+ c.save();c.shadowColor='#3dffa2';c.shadowBlur=30;c.strokeStyle='rgba(61,255,162,.9)';c.lineWidth=5;c.beginPath();pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.stroke();c.restore();
+ // grain
+ const im=c.getImageData(0,0,W,H),d=im.data;for(let i=0;i<d.length;i+=4){const v=(rnd(i)*30)|0;d[i]+=v*.3;d[i+1]+=v*.3;d[i+2]+=v*.3}c.putImageData(im,0,0);
+}
+window.drawChart=k=>{const cv=document.getElementById('cv');cv.getContext('2d').clearRect(0,0,1080,1920);chart('cv',1080,1920,Math.max(1,Math.round(30*k)),1180,520);};drawChart(1);
+</script></body></html>
