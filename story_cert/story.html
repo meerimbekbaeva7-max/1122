@@ -1,0 +1,89 @@
+<!doctype html><html lang="ky"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#05060a;font-family:"Inter Display",Inter,sans-serif;color:#fff}
+#bg{position:absolute;inset:0}
+.c{position:absolute;left:0;right:0;text-align:center}
+.g{background:linear-gradient(100deg,#ffe29a,#ffb627 45%,#ff8a00);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gr{color:#3dffa2}
+.tag{display:inline-flex;align-items:center;gap:16px;padding:16px 34px;border-radius:999px;background:rgba(255,59,78,.14);border:2px solid rgba(255,59,78,.6);color:#ff6b7a;font-weight:800;font-size:38px;letter-spacing:5px}
+.dot{width:16px;height:16px;border-radius:50%;background:#ff3b4e;box-shadow:0 0 18px #ff3b4e;animation:blink 1s steps(2) infinite}
+.cal{display:inline-flex;gap:34px}
+.day{width:330px;height:380px;border-radius:44px;background:linear-gradient(180deg,#1a2236,#0c1120);border:3px solid rgba(255,182,39,.5);box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 80px rgba(255,182,39,.2);overflow:hidden}
+.day .top{height:92px;background:linear-gradient(100deg,#ffe29a,#ffb627 45%,#ff8a00);color:#1a1000;font-weight:900;font-size:46px;letter-spacing:4px;display:flex;align-items:center;justify-content:center}
+.day .num{font-weight:900;font-size:220px;line-height:288px;letter-spacing:-8px}
+h1{font-weight:900;font-size:96px;line-height:1.02;letter-spacing:-2px}
+.big{font-weight:900;font-size:128px;letter-spacing:-4px;line-height:1}
+.btn{display:inline-flex;align-items:center;gap:22px;padding:42px 96px;border-radius:999px;font-size:72px;font-weight:900;color:#1a1000;background:linear-gradient(100deg,#ffe29a,#ffb627 45%,#ff8a00)}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.8) 100%)}
+.flash{position:absolute;inset:0;background:#fff;opacity:0}
+.brand{font-weight:900;font-size:54px;letter-spacing:-1px}
+/* animations */
+.a1{animation:drop .6s cubic-bezier(.2,.9,.3,1) both .1s}
+.d1{animation:flip .8s cubic-bezier(.2,.9,.3,1.2) both .4s}
+.d2{animation:flip .8s cubic-bezier(.2,.9,.3,1.2) both .65s}
+.a2{animation:blurIn .7s cubic-bezier(.2,.9,.3,1) both 1.0s}
+.a3{animation:slam .45s cubic-bezier(.2,.9,.3,1) both 1.8s}
+.a4{animation:pop .6s cubic-bezier(.3,1.6,.5,1) both 2.6s, pulse 1s ease-in-out infinite 3.2s}
+.a5{animation:fade .6s ease-out both 3s}
+.fl{animation:flashA .45s ease-out forwards .4s}
+.arrow{display:inline-block;animation:bounce .7s ease-in-out infinite}
+@keyframes drop{from{opacity:0;transform:translateY(-80px)}to{opacity:1;transform:none}}
+@keyframes flip{from{opacity:0;transform:perspective(1200px) rotateX(-90deg) translateY(-60px)}to{opacity:1;transform:none}}
+@keyframes blurIn{from{opacity:0;transform:translateY(60px);filter:blur(20px)}to{opacity:1;transform:none;filter:none}}
+@keyframes slam{from{opacity:0;transform:scale(2.6);filter:blur(16px)}to{opacity:1;transform:none;filter:none}}
+@keyframes glow{0%,100%{text-shadow:0 0 0 rgba(61,255,162,0)}50%{text-shadow:0 0 50px rgba(61,255,162,.7)}}
+@keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,182,39,.55),0 30px 90px rgba(255,138,0,.45)}50%{transform:scale(1.06);box-shadow:0 0 0 36px rgba(255,182,39,0),0 30px 90px rgba(255,138,0,.6)}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes flashA{0%{opacity:.5}100%{opacity:0}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(16px)}}
+@keyframes blink{0%{opacity:1}100%{opacity:.2}}
+
+.cert{display:inline-block;position:relative;width:700px;height:410px;border-radius:40px;background:linear-gradient(135deg,#1a2236,#0c1120 60%,#12302a);border:3px solid rgba(255,182,39,.55);box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 90px rgba(255,182,39,.2);overflow:hidden;padding-top:40px}
+.cert:before{content:"";position:absolute;inset:16px;border:2px dashed rgba(255,182,39,.35);border-radius:28px}
+.seal{display:flex;justify-content:center}
+.ctxt{font-weight:900;font-size:64px;letter-spacing:8px;margin-top:14px;background:linear-gradient(100deg,#ffe29a,#ffb627 45%,#ff8a00);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lines{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:22px}.lines i{display:block;width:80%;height:12px;border-radius:6px;background:rgba(255,255,255,.12)}
+.cert .shine{position:absolute;top:-50%;left:-40%;width:160px;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:rotate(20deg);animation:shine 2.4s ease-in-out infinite 1.4s}
+.mid{font-weight:900;font-size:76px;line-height:1.1;letter-spacing:-1.5px}
+.bubble{display:inline-block;padding:34px 56px;border-radius:44px;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.18);font-weight:800;font-size:52px;line-height:1.2;color:#dfe6f2}
+.hund{position:relative;color:#ff6b7a;font-weight:900}
+.hund:after{content:"";position:absolute;left:-6%;top:50%;width:112%;height:8px;border-radius:4px;background:#ff3b4e;transform-origin:left;transform:scaleX(0);display:none}
+.a6{animation:blurIn .7s cubic-bezier(.2,.9,.3,1) both 2.5s}
+.a4b{animation:pop .6s cubic-bezier(.3,1.6,.5,1) both 3.1s}
+.a5{animation:fade .6s ease-out both 3.6s}
+@keyframes shine{0%{left:-40%}60%,100%{left:120%}}
+@keyframes strike{to{transform:scaleX(1)}}
+</style></head><body>
+<canvas id="bg" width="1080" height="1920"></canvas>
+<div class="vig"></div>
+<div class="c a1" style="top:150px"><div class="tag" style="background:rgba(255,182,39,.14);border-color:rgba(255,182,39,.6);color:#ffc850"><span class="dot" style="background:#ffb627;box-shadow:0 0 18px #ffb627"></span>МААНИЛҮҮ МААЛЫМАТ</div></div>
+<div class="c d1" style="top:330px"><div class="cert">
+  <div class="seal"><svg viewBox="0 0 100 100" width="150" height="150"><circle cx="50" cy="50" r="44" fill="none" stroke="#3dffa2" stroke-width="7"/><path d="M30 52 L44 66 L72 36" fill="none" stroke="#3dffa2" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  <div class="ctxt">СЕРТИФИКАТ</div><div class="lines"><i></i><i style="width:70%"></i></div>
+  <div class="shine"></div>
+</div></div>
+<div class="c a2" style="top:800px"><h1>Сертификат<br><span class="g">алгандар!</span></h1></div>
+<div class="c a3" style="top:1050px"><div class="mid">Тынчтык сактап,<br><span class="gr">сабыр кармап</span> тургула 🙏</div></div>
+<div class="c a6" style="top:1310px"><div class="mid" style="font-size:62px">Кезегиңер келгенде<br><span class="g">өзүбүз айтабыз!</span></div></div>
+<div class="c a4b" style="top:1530px"><div class="bubble">Күнүнө <span class="hund">100 жолу</span><br>сураштын кажети жок 😊</div></div>
+<div class="c a5" style="top:1790px"><div class="brand" style="font-size:46px">АЙДА<span class="g">!</span></div></div>
+<div class="flash fl"></div>
+<script>
+const W=1080,H=1920,g=document.getElementById('bg').getContext('2d');
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+window.renderBg=function(t){
+ const grd=g.createLinearGradient(0,0,0,H);grd.addColorStop(0,'#05060a');grd.addColorStop(.55,'#0d2a24');grd.addColorStop(1,'#020203');g.fillStyle=grd;g.fillRect(0,0,W,H);
+ for(let i=0;i<4;i++){const x=W*(.2+.6*rnd(i))+Math.sin(t*1.05+i*2)*140,y=H*(.15+.7*rnd(i+9))+Math.cos(t*1.05+i)*160,r=500;
+  const col=i%2?'rgba(61,255,162,.12)':'rgba(255,182,39,.12)';const rg=g.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,col);rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,W,H);}
+ // road
+ const hy=H*.66,ph=(t/6)%1;g.save();g.globalAlpha=.5;g.strokeStyle='rgba(255,255,255,.08)';g.lineWidth=3;
+ for(let k=-6;k<=6;k++){g.beginPath();g.moveTo(W/2,hy);g.lineTo(W/2+k*420,H+40);g.stroke();}
+ for(let n=0;n<12;n++){const z=((n/12)+ph*2)%1,z2=Math.min(1,z+.035);const y1=hy+(H-hy)*z*z,y2=hy+(H-hy)*z2*z2,w1=4+30*z*z,w2=4+30*z2*z2;
+  g.fillStyle=`rgba(255,200,80,${.2+.6*z})`;g.beginPath();g.moveTo(W/2-w1/2,y1);g.lineTo(W/2+w1/2,y1);g.lineTo(W/2+w2/2,y2);g.lineTo(W/2-w2/2,y2);g.fill();}
+ g.restore();
+ // sparks
+ for(let i=0;i<50;i++){const p=(rnd(i+200)+t/6)%1;const x=rnd(i+100)*W;const y=H-p*H;g.fillStyle=`rgba(255,210,140,${.6*Math.sin(Math.PI*p)})`;g.beginPath();g.arc(x,y,1.5+rnd(i)*2.5,0,6.283);g.fill();}
+};
+renderBg(0);
+</script></body></html>
