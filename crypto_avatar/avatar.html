@@ -1,0 +1,65 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0}html,body{width:1024px;height:1024px;overflow:hidden;background:#000;font-family:"Inter Display",Inter,sans-serif}
+#c{position:absolute;inset:0}
+</style></head><body><canvas id="c" width="1024" height="1024"></canvas>
+<script>
+const W=1024,H=1024,C=W/2,g=document.getElementById('c').getContext('2d');
+const img=new Image();img.src='src.jpg';
+const TAU=Math.PI*2,LOOP=6;
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+const GLY=['₿','Ξ','₮','◆','₿','Ξ','₮','◆','₿','Ξ','₮','◆'];
+window.ready=new Promise(r=>img.onload=r);
+window.renderAt=function(t){
+ const ph=(t%LOOP)/LOOP,w=ph*TAU;
+ g.fillStyle='#03050a';g.fillRect(0,0,W,H);
+ // photo: slow push-in + drift (seamless: sin-based)
+ const sc=1.0+0.035*(1-Math.cos(w))/2;
+ const iw=img.width,ih=img.height; // crop square around face
+ const side=iw*0.98, sx0=(iw-side)/2, sy0=0;
+ g.save();g.translate(C,C);g.scale(sc,sc);g.translate(Math.sin(w)*6,Math.cos(w)*4);
+ g.drawImage(img,sx0,sy0,side,side,-C,-C,W,H);
+ g.restore();
+ // color grade: teal shadows / gold highlights
+ g.save();g.globalCompositeOperation='soft-light';
+ const cg=g.createLinearGradient(0,0,W,H);cg.addColorStop(0,'rgba(0,255,170,.14)');cg.addColorStop(1,'rgba(255,170,40,.28)');
+ g.fillStyle=cg;g.fillRect(0,0,W,H);g.restore();
+ // chrome shine sweep across face
+ const sp=((ph*1.0)%1);const sx=-400+sp*1800;
+ g.save();g.globalCompositeOperation='overlay';
+ const sg=g.createLinearGradient(sx-200,0,sx+200,0);
+ sg.addColorStop(0,'rgba(255,255,255,0)');sg.addColorStop(.5,'rgba(255,255,255,.9)');sg.addColorStop(1,'rgba(255,255,255,0)');
+ g.translate(C,C);g.rotate(-.35);g.translate(-C,-C);g.fillStyle=sg;g.fillRect(-400,-400,W+800,H+800);g.restore();
+ // RGB glitch slices (brief, twice per loop)
+ const gl=Math.max(0,1-Math.abs((ph%.5)-.25)*40);
+ if(gl>0){for(let k=0;k<6;k++){const y=(rnd(k+Math.floor(t*30))*H)|0,hh=8+rnd(k+3)*40,dx=(rnd(k+7)-.5)*60*gl;
+   g.drawImage(g.canvas,0,y,W,hh,dx,y,W,hh);}
+  g.save();g.globalCompositeOperation='screen';g.fillStyle=`rgba(0,255,170,${.12*gl})`;g.fillRect(0,0,W,H);g.restore();}
+ // vignette to circle
+ const vg=g.createRadialGradient(C,C,280,C,C,540);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.92)');g.fillStyle=vg;g.fillRect(0,0,W,H);
+ // rotating outer ring with Kyrgyz-like ornament ticks + crypto glyphs
+ g.save();g.translate(C,C);
+ const R=470;
+ // gradient ring
+ g.rotate(w);
+ const rg=g.createConicGradient(0,0,0);rg.addColorStop(0,'#3dffa2');rg.addColorStop(.25,'#ffb627');rg.addColorStop(.5,'#ff8a00');rg.addColorStop(.75,'#14b8a6');rg.addColorStop(1,'#3dffa2');
+ g.strokeStyle=rg;g.lineWidth=10;g.shadowColor='#3dffa2';g.shadowBlur=30;g.beginPath();g.arc(0,0,R,0,TAU);g.stroke();
+ // dashed inner orbit
+ g.shadowBlur=0;g.setLineDash([4,22]);g.lineWidth=4;g.strokeStyle='rgba(255,200,90,.6)';g.beginPath();g.arc(0,0,R-30,0,TAU);g.stroke();g.setLineDash([]);
+ g.restore();
+ // glyphs orbiting the opposite way
+ g.save();g.translate(C,C);g.rotate(-w);
+ g.font='900 40px "Inter Display", Inter, sans-serif';g.textAlign='center';g.textBaseline='middle';
+ GLY.forEach((s,i)=>{const a=i/GLY.length*TAU;const x=Math.cos(a)*(R-30),y=Math.sin(a)*(R-30);
+   g.save();g.translate(x,y);g.rotate(w);g.fillStyle='#05080d';g.beginPath();g.arc(0,0,30,0,TAU);g.fill();
+   g.fillStyle=i%2?'#ffb627':'#3dffa2';g.shadowColor=g.fillStyle;g.shadowBlur=18;g.fillText(s,0,2);g.restore();});
+ g.restore();
+ // particles / data bits rising
+ for(let i=0;i<60;i++){const p=(rnd(i+11)+ph)%1;const a=rnd(i+5)*TAU;const r=150+rnd(i+9)*300;
+   const x=C+Math.cos(a)*r,y=C+Math.sin(a)*r-p*120;const al=Math.sin(Math.PI*p)*.8;
+   g.fillStyle=i%3?`rgba(61,255,162,${al})`:`rgba(255,190,90,${al})`;g.fillRect(x,y,3,3);}
+ // grain
+ const id=g.getImageData(0,0,W,H),d=id.data;let seed=Math.floor(t*30)*7919+3;
+ for(let i=0;i<d.length;i+=4){seed=(seed*16807)%2147483647;const v=(seed%17)-8;d[i]+=v;d[i+1]+=v;d[i+2]+=v;}
+ g.putImageData(id,0,0);
+};
+</script></body></html>
