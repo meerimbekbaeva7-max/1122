@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(../node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(#ffd59a,#fff0c8 55%,#e9fff3);font-family:Fredoka,sans-serif}
+canvas{position:absolute;inset:0}.t{position:absolute;font-weight:700;color:#3b3b55}
+</style></head><body>
+<canvas id="gl" width="1920" height="1080"></canvas>
+<div class="t" style="left:60px;top:30px;font-size:130px;-webkit-text-stroke:14px #fff;paint-order:stroke fill"><span style="color:#2fc7c0">T</span><span style="color:#ffc400">i</span><span style="color:#ff5fa2">k</span><span style="color:#2f8bff">o</span></div>
+<div class="t" style="left:70px;top:185px;font-size:40px">the little rainbow dino 🦕🌈</div>
+<div class="t" style="left:70px;top:245px;font-size:30px;color:#4a5a7a">“Tiko-tiko-RAWR!” · Rainbow Tots</div>
+<div class="t" style="left:0;width:380px;top:960px;text-align:center;font-size:34px">front</div><div class="t" style="left:380px;width:380px;top:960px;text-align:center;font-size:34px">rainbow spikes!</div>
+<div class="t" style="left:760px;width:1160px;top:960px;text-align:center;font-size:34px">happy · singing · surprised · RAWR!</div>
+<script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';import {makeTiko} from './tiko.js';
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,alpha:true,preserveDrawingBuffer:true});r.setPixelRatio(1);r.setSize(1920,1080,false);
+r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.1;r.setScissorTest(true);
+const views=[{x:0,y:300,w:380,h:640,rot:-.35,mouth:.35,drops:false,d:13},{x:380,y:300,w:380,h:640,rot:-2.2,mouth:0,drops:false,d:13},
+ {x:760,y:420,w:290,h:520,rot:-.6,mouth:0,drops:false,d:13,eyes:1},{x:1050,y:420,w:290,h:520,rot:.55,mouth:1,drops:false,d:13},
+ {x:1340,y:420,w:290,h:520,rot:-.45,mouth:.8,drops:false,d:13,surprise:true},{x:1630,y:420,w:290,h:520,rot:.5,mouth:.5,drops:true,d:13}];
+for(const v of views){const sc=new THREE.Scene();sc.add(new THREE.HemisphereLight('#ffffff','#a8f0c8',1.5));const dl=new THREE.DirectionalLight('#fff',2.0);dl.position.set(4,8,10);sc.add(dl);sc.add(new THREE.AmbientLight('#fff',.45));
+ const L=makeTiko(THREE);L.g.rotation.y=v.rot;L.mouth.scale.y=.25+v.mouth;
+ if(v.surprise){L.eyes.forEach(e=>e.scale.set(1.15,1.25,1));L.mouth.scale.set(.7,1.6,1);L.arms.forEach((a,i)=>a.position.y+=.5);}
+ if(v.mouth>=1)L.arms.forEach((a,i)=>{a.position.y+=.6;});
+ sc.add(L.g);const sh=new THREE.Mesh(new THREE.CircleGeometry(1.5,40),new THREE.MeshBasicMaterial({color:'#2a4a7a',transparent:true,opacity:.12}));sh.rotation.x=-Math.PI/2;sh.scale.y=.5;sh.position.y=-.35;sc.add(sh);
+ if(v.drops){L.mouth.scale.set(1.2,2.2,1);}
+ const cam=new THREE.PerspectiveCamera(30,v.w/v.h,.1,100);cam.position.set(0,1.9,v.d+.5);cam.lookAt(0,1.5,0);
+ r.setViewport(v.x,1080-v.y-v.h,v.w,v.h);r.setScissor(v.x,1080-v.y-v.h,v.w,v.h);r.render(sc,cam);}
+window.ready=true;
+</script></body></html>
