@@ -34,7 +34,7 @@ SONG = [
 ]
 if len(sys.argv) > 1:
     SONG = [(t, [None if w is None else (w[0], [tuple(n) for n in w[1]]) for w in ws]) for t, ws in json.load(open(sys.argv[1]))]
-INTRO_BEATS = 8
+INTRO_BEATS = int(os.environ.get("INTRO_BEATS", 8))
 TOTAL = INTRO_BEATS + 8 * len(SONG)
 
 voice = PiperVoice.load(str(ROOT.parent / "voice/models/en_US-amy-medium.onnx"))

@@ -6,7 +6,7 @@ from scipy.signal import butter, sosfilt
 
 SR = 48000
 song = json.load(open(f"{BD}/song.json"))
-B = song["beat"]; DUR = song["duration"]; N = int(DUR * SR); rng = np.random.default_rng(5)
+B = song["beat"]; IB = round(song["intro"] / song["beat"]); DUR = song["duration"]; N = int(DUR * SR); rng = np.random.default_rng(5)
 t = np.arange(N) / SR
 NOTE = {n: i for i, n in enumerate("C C# D D# E F F# G G# A A# B".split())}
 def hz(name): n, o = name[:-1], int(name[-1]); return 440 * 2 ** ((NOTE[n] + 12 * (o + 1) - 69) / 12)
@@ -42,22 +42,22 @@ prog = json.load(open(sys.argv[2])) if len(sys.argv) > 2 else [["C", "F", "G", "
         ["F", "G", "C", "C"], ["C", "C", "G", "C"], ["C", "F", "C", "C"]]
 for li, p in enumerate(prog):
     for k, c in enumerate(p):
-        at = (li * 8 + k * 2) * B
+        at = ((li - 1) * 8 + IB + k * 2) * B if IB else (li * 8 + k * 2) * B
         add("uke", at, uke([mhz(m) for m in CH[c]], 2 * B))
         add("uke", at + B, uke([mhz(m) for m in CH[c]][::-1], B, .05))
         add("bass", at, np.sin(2*np.pi*mhz(CH[c][0]-24)*np.arange(int(1.8*B*SR))/SR)*np.exp(-np.arange(int(1.8*B*SR))/SR*2.5)*.35)
 # drums: from bar 2 of intro, kick on 1&3, clap on 2&4, shaker 8ths
-for b in np.arange(4, DUR / B, 1):
+for b in np.arange(min(4, IB), DUR / B, 1):
     at = b * B
     if int(b) % 2 == 0: add("drum", at, kick())
     else: add("drum", at, clap())
     add("drum", at, shaker()); add("drum", at + B/2, shaker(.03))
 # intro xylophone fanfare (C E G C')
-for k, n in enumerate(["C5", "E5", "G5", "C6", "G5", "C6"]):
+for k, n in enumerate(["C5", "E5", "G5", "C6", "G5", "C6"] if IB else []):
     add("mel", k * .5 * B, xylo(hz(n), .6, .22))
 # xylophone doubles the sung melody an octave up (helps kids follow the tune)
 for li, (tag, words) in enumerate(song["song"]):
-    beat = 8 + 8 * li
+    beat = IB + 8 * li
     for w in words:
         if w is None: continue
         for n, b in w[1]:
