@@ -3,3 +3,5 @@ __pycache__/
 voice/models/
 voice/*.wav
 coaster/build/
+kids/node_modules/
+kids/build/
