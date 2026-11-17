@@ -20,7 +20,7 @@ svg{display:block}
 <g id="sp" fill="#fff"></g>
 <g id="plates"></g>
 <g font-family="Fredoka" font-weight="700" text-anchor="middle">
- <text x="1024" y="610" font-size="190" id="title"></text>
+ <text x="1024" y="610" font-size="170" id="title"></text>
 </g>
 <g id="tagPlate"></g>
 <text x="1024" y="712" font-family="Fredoka" font-weight="700" font-size="54" text-anchor="middle" fill="#3b3b55" id="tag">Fun Learning Songs for Kids</text>
@@ -59,7 +59,7 @@ el('circle',{cx:1400,cy:1040,r:55,fill:'#ff8a00',stroke:'#fff','stroke-width':8}
 // sparkles
 [[1024,250,30],[760,330,18],[1290,320,20],[560,260,12],[1490,250,14],[880,190,10],[1170,180,10],[330,300,14],[1700,300,14]].forEach(([x,y,r])=>el('path',{d:`M${x} ${y-r} Q${x} ${y} ${x+r} ${y} Q${x} ${y} ${x} ${y+r} Q${x} ${y} ${x-r} ${y} Q${x} ${y} ${x} ${y-r}Z`},$('sp')));
 // title letters, sticker plates
-const T=$('title');[...'Baby Color'].forEach((ch,i)=>{const s=el('tspan',{fill:ch===' '?'none':C[(i+6)%7],dy:i%2?-10:10},T);s.textContent=ch;});
+const T=$('title');[...'Rainbow Tots'].forEach((ch,i)=>{const s=el('tspan',{fill:ch===' '?'none':C[(i+6)%7],dy:i%2?-10:10},T);s.textContent=ch;});
 document.fonts.ready.then(()=>{
  const b=T.getBBox(),pad=34;
  el('rect',{x:b.x-pad,y:b.y-pad+28,width:b.width+pad*2,height:b.height+pad*2-44,rx:70,fill:'#000',opacity:.16,transform:'translate(0 12)'},$('plates'));

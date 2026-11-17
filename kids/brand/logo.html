@@ -31,7 +31,7 @@ svg{display:block}
 <!-- wordmark -->
 <g id="plates"></g>
 <g font-family="Fredoka" font-weight="700" text-anchor="middle">
- <text x="400" y="528" font-size="132" id="baby"></text>
+ <text x="400" y="530" font-size="100" id="baby"></text>
  <text x="400" y="668" font-size="150" id="color"></text>
 </g>
 </svg>
@@ -49,7 +49,7 @@ const sp=document.getElementById('sp');[[400,150,22],[250,215,14],[555,205,16],[
 const C=['#ff3b3b','#ff8a00','#ffc400','#2fd65a','#2f8bff','#7b5bff','#ff5fa2'];
 const fill=(id,txt,off,rot)=>{const t=document.getElementById(id);[...txt].forEach((ch,i)=>{const s=el('tspan',{fill:C[(i+off)%7],dy:i%2?-8:8},t);s.textContent=ch;});};
 const bg=(id,txt)=>{const t=document.getElementById(id);[...txt].forEach((ch,i)=>{const s=el('tspan',{dy:i%2?-8:8},t);s.textContent=ch;});};
-fill('baby','Baby',6,0);fill('color','Color',0,0);
+fill('baby','Rainbow',0,0);fill('color','Tots',3,0);
 document.fonts.ready.then(()=>{const pl=document.getElementById('plates');
  for(const id of['baby','color']){const b=document.getElementById(id).getBBox();const pad=22;
   el('rect',{x:b.x-pad,y:b.y-pad+14,width:b.width+pad*2,height:b.height+pad*2-20,rx:58,fill:'#000',opacity:.16,transform:'translate(0 10)'},pl);
