@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#f3f2f7;font-family:"Inter Display",Inter,sans-serif;color:#111}
+canvas{position:absolute;inset:0}
+.brand{position:absolute;top:56px;left:64px;font-weight:800;font-size:26px;letter-spacing:3px;color:#222}
+.head{position:absolute;left:64px;top:150px;right:64px}
+.head .l1{font-weight:900;font-size:104px;letter-spacing:-3px;line-height:1}
+.head .l2{font-weight:900;font-size:104px;letter-spacing:-3px;line-height:1;color:#9a9aa8}
+.pill{display:inline-block;background:#111;color:#fff;border-radius:22px;padding:2px 26px 10px;margin-top:10px}
+.sub{position:absolute;left:80px;right:80px;top:1610px;text-align:center;font-weight:800;font-size:58px;line-height:1.2}
+.sub .hl{color:#ff4d2e}
+.sub .hlp{background:#111;color:#fff;border-radius:16px;padding:0 16px 6px}
+.badge{position:absolute;transform-origin:right center;padding:22px 36px;border-radius:30px;background:rgba(255,255,255,.85);backdrop-filter:blur(6px);box-shadow:0 20px 60px rgba(30,20,80,.12);font-weight:900;font-size:64px;display:flex;align-items:center;gap:18px}
+.badge small{font-size:30px;color:#7a7a8a;font-weight:700;letter-spacing:2px}
+.btn{position:absolute;left:50%;top:1300px;transform:translateX(-50%);background:#111;color:#fff;border-radius:999px;padding:40px 96px;font-weight:900;font-size:70px;display:flex;gap:20px;align-items:center;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.flash{position:absolute;inset:0;background:#fff;opacity:0}
+.w{display:inline-block}
+</style></head><body>
+<canvas id="cv" width="1080" height="1920"></canvas>
+<div class="brand">АМЕРИКАНСКИЕ ГОРКИ</div>
+<div class="head" id="head"><div class="l1" id="h1"></div><div class="l2" id="h2"></div></div>
+<div class="badge" id="bH" style="right:64px;top:520px"><span id="hv">0</span><small>М</small></div>
+<div class="badge" id="bS" style="right:64px;top:520px"><span id="sv">0</span><small>КМ/Ч</small></div>
+<div class="badge" id="bG" style="right:64px;top:520px"><span id="gv">1.0</span><small>G</small></div>
+<div class="badge" id="bB" style="right:64px;top:520px">❤️ <span id="bv">72</span><small>УД/МИН</small></div>
+<div class="btn" id="btn">Подробнее <span id="arr">→</span></div>
+<div class="sub" id="sub"></div>
+<div class="flash" id="flash"></div>
+<script>
+const TL=[[0,4],[4,8.5],[8.5,12.5],[12.5,17],[17,21.5],[21.5,25.5],[25.5,30]];
+const HEAD=[["Очередь.","Сердце стучит"],["Щёлк.","Подъём"],["50 метров","над землёй"],["И — вниз!",""],["Мёртвая","петля"],["30 секунд","восторга"],["Готов","прокатиться?"]];
+const PILL=[null,null,null,"100 км/ч",null,null,null];
+const SUB=[
+ 'Ты стоишь в <span class="hl">очереди</span>. Сердце уже стучит.',
+ 'Щелчок. Вагончик <span class="hl">медленно</span> ползёт вверх.',
+ '<span class="hlp">Пятьдесят метров</span>. Под тобой весь город.',
+ 'Секунда тишины… и <span class="hl">вниз</span>! Сто километров в час!',
+ 'Мёртвая петля. <span class="hl">Перегрузка</span> — почти как у пилота.',
+ 'Тридцать секунд — и ты <span class="hl">кричишь</span> от восторга.',
+ 'Готов прокатиться? Жми <span class="hlp">«Подробнее»</span>!'];
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),prog=(t,a,b)=>clamp((t-a)/(b-a));
+const eo=x=>1-Math.pow(1-x,4),eio=x=>x<.5?8*x**4:1-Math.pow(-2*x+2,4)/2,lerp=(a,b,x)=>a+(b-a)*x;
+const back=x=>{const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+
+// ---------- track: Catmull-Rom through control points (world units, y down) ----------
+const P=[[-600,900],[0,900],[400,900],[700,780],[1100,330],[1250,250],[1380,290],[1560,900],[1760,960],
+ [2000,910],[2170,720],[2120,470],[1960,410],[1820,520],[1870,760],[2080,950],[2450,960],
+ [2800,640],[3150,920],[3500,720],[3850,930],[4300,900],[5200,900]];
+const KEY={station:1,liftStart:3,top:5,drop:7,loopIn:9,loopOut:16,hills:17,end:21};
+const pts=[];const segIdx=[];
+function cr(p0,p1,p2,p3,t){const t2=t*t,t3=t2*t;return[.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)]}
+for(let i=0;i<P.length-1;i++){const p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(P.length-1,i+2)];segIdx.push(pts.length);for(let k=0;k<40;k++)pts.push(cr(p0,p1,p2,p3,k/40));}
+segIdx.push(pts.length);pts.push(P[P.length-1]);
+const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+const sAt=k=>cum[segIdx[k]];
+function at(s){let lo=0,hi=cum.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(cum[m]<s)lo=m;else hi=m;}
+ const f=(s-cum[lo])/((cum[hi]-cum[lo])||1);const a=pts[lo],b=pts[hi];return{x:lerp(a[0],b[0],f),y:lerp(a[1],b[1],f),ang:Math.atan2(b[1]-a[1],b[0]-a[0])}}
+
+// cart progress (arc length) per time
+function cartS(t){
+ const k=(i)=>sAt(KEY[i]);
+ const [s0,s1,s2,s3,s4,s5,s6]=TL.map(x=>x[0]);
+ if(t<s1) return lerp(k('station')-120,k('station'),eio(prog(t,0,3.5)));
+ if(t<s2) return lerp(k('station'),k('liftStart')+(k('top')-k('liftStart'))*.75,prog(t,s1+.3,s2));       // slow climb
+ if(t<s3) return lerp(k('liftStart')+(k('top')-k('liftStart'))*.75,k('top')+30,eo(prog(t,s2,s3)));         // creep to crest
+ if(t<s4){const dropT=s3+1.35; if(t<dropT) return k('top')+30+ (t-s3)*12;                                    // pause, then plunge
+   const p=prog(t,dropT,s4);return lerp(k('top')+30+1.35*12,k('loopIn'),p*p*.6+p*.4);}
+ if(t<s5) return lerp(k('loopIn'),k('loopOut'),eio(prog(t,s4,s5-.3)));
+ if(t<s6) return lerp(k('loopOut'),k('end')-200,prog(t,s5,s6));
+ return lerp(k('end')-200,k('end')+150,eo(prog(t,s6,s6+2.5)));
+}
+// camera: follows cart, zoom per scene
+function camera(t,c){
+ const z=[1.15,1.0,.62,.95,.9,.75,.8];
+ let i=TL.findIndex(([a,b])=>t>=a&&t<b);if(i<0)i=6;
+ const zz=lerp(i?z[i-1]:z[0],z[i],eio(prog(t,TL[i][0],TL[i][0]+1.2)));
+ const lookY=i===2?c.y+260:c.y;
+ return{x:c.x+80,y:lookY,z:zz};
+}
+
+const cv=$('cv'),g=cv.getContext('2d');
+let camS={x:0,y:900,z:1.15};
+function draw(t){
+ const W=1080,H=1920;
+ // soft light background with drifting blobs
+ g.fillStyle='#f3f2f7';g.fillRect(0,0,W,H);
+ [[200,500,'rgba(167,139,250,.25)'],[900,900,'rgba(96,165,250,.22)'],[500,1500,'rgba(251,146,60,.16)']].forEach(([x,y,c],i)=>{
+   const xx=x+Math.sin(t*.4+i*2)*120,yy=y+Math.cos(t*.3+i)*100;const r=g.createRadialGradient(xx,yy,0,xx,yy,520);r.addColorStop(0,c);r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,W,H);});
+ const s=cartS(t),c=at(s);
+ const target=camera(t,c);
+ camS=target; // deterministic
+ const ox=W/2,oy=1060;
+ const X=x=>(x-camS.x)*camS.z+ox,Y=y=>(y-camS.y)*camS.z+oy;
+ // distant city skyline (parallax)
+ g.save();g.fillStyle='rgba(120,120,160,.16)';
+ for(let i=0;i<40;i++){const bx=((i*170-camS.x*.25)%(40*170)+40*170)%(40*170)-300;const bh=120+rnd(i)*380;const gy=Y(985);g.fillRect(bx,gy-bh*camS.z*.6,120,bh*camS.z*.6);}
+ g.restore();
+ // ground
+ {const gy=Y(985);const gg=g.createLinearGradient(0,gy,0,H);gg.addColorStop(0,'#e4e2ee');gg.addColorStop(1,'#f3f2f7');g.fillStyle=gg;g.fillRect(0,gy,W,H);g.fillStyle='rgba(120,120,160,.25)';g.fillRect(0,gy,W,3);}
+ // supports
+ g.strokeStyle='rgba(90,90,120,.35)';g.lineWidth=Math.max(2,6*camS.z);
+ for(let i=0;i<pts.length;i+=8){const [x,y]=pts[i];if(y<940&&!(x>1780&&x<2200&&y<900)){g.beginPath();g.moveTo(X(x),Y(y)+10);g.lineTo(X(x),Y(985));g.stroke();}}
+ // track rails (two offset lines + ties)
+ const off=14;
+ function rail(d,col,w){g.strokeStyle=col;g.lineWidth=w*camS.z;g.lineCap='round';g.beginPath();
+  for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];const an=Math.atan2(b[1]-a[1],b[0]-a[0]);const nx=-Math.sin(an)*d,ny=Math.cos(an)*d;const px=X(a[0]+nx),py=Y(a[1]+ny);i?g.lineTo(px,py):g.moveTo(px,py);}g.stroke();}
+ g.strokeStyle='rgba(60,60,90,.35)';g.lineWidth=4*camS.z;
+ for(let i=0;i<pts.length-1;i+=2){const a=pts[i],b=pts[i+1];const an=Math.atan2(b[1]-a[1],b[0]-a[0]);const nx=-Math.sin(an)*off,ny=Math.cos(an)*off;g.beginPath();g.moveTo(X(a[0]-nx),Y(a[1]-ny));g.lineTo(X(a[0]+nx),Y(a[1]+ny));g.stroke();}
+ const grad=g.createLinearGradient(0,0,W,0);grad.addColorStop(0,'#ff4d2e');grad.addColorStop(.5,'#ff8a00');grad.addColorStop(1,'#7c3aed');
+ rail(-off,grad,9);rail(off,grad,9);
+ // cart train (3 cars)
+ for(let k=2;k>=0;k--){const cc=at(s-k*95);g.save();g.translate(X(cc.x),Y(cc.y));g.rotate(cc.ang);g.scale(camS.z,camS.z);
+  g.shadowColor='rgba(0,0,0,.25)';g.shadowBlur=20;g.shadowOffsetY=10;
+  const cg=g.createLinearGradient(0,-70,0,0);cg.addColorStop(0,k?'#3b3b4f':'#111');cg.addColorStop(1,k?'#1f1f2b':'#2a2a38');
+  g.fillStyle=cg;g.beginPath();g.roundRect(-42,-64,84,52,16);g.fill();g.shadowColor='transparent';
+  g.fillStyle='#ff4d2e';g.fillRect(-42,-26,84,8);
+  // riders (heads + raised arms after the drop)
+  const arms=t>TL[3][0]+1.35&&t<TL[6][0];
+  for(const hx of[-18,18]){g.fillStyle='#ffd7b5';g.beginPath();g.arc(hx,-76,12,0,6.283);g.fill();
+   if(arms){g.strokeStyle='#ffd7b5';g.lineWidth=6;g.beginPath();g.moveTo(hx-8,-70);g.lineTo(hx-16,-108);g.moveTo(hx+8,-70);g.lineTo(hx+16,-108);g.stroke();}}
+  g.fillStyle='#555';[-26,26].forEach(wx=>{g.beginPath();g.arc(wx,-8,9,0,6.283);g.fill();});
+  g.restore();}
+ // speed lines after drop
+ const fast=t>TL[3][0]+1.35&&t<TL[5][1];
+ if(fast){g.strokeStyle='rgba(30,30,60,.12)';g.lineWidth=4;for(let i=0;i<26;i++){const y=rnd(i)*H,len=200+rnd(i+3)*400,x=((rnd(i+7)*W-t*2600)%(W+600)+W+600)%(W+600)-300;g.beginPath();g.moveTo(x,y);g.lineTo(x+len,y);g.stroke();}}
+ return{s,c};
+}
+
+function setWords(el,html,p){el.innerHTML=html;el.style.opacity=p;el.style.transform=`translateY(${lerp(40,0,p)}px)`;el.style.filter=`blur(${lerp(10,0,p)}px)`;}
+let lastScene=-1;
+window.renderAt=function(t){
+ const {c}=draw(t);
+ let i=TL.findIndex(([a,b])=>t>=a&&t<b);if(i<0)i=6;const [a,b]=TL[i];
+ // headline: in/out
+ const hin=eo(prog(t,a,a+.45)),hout=i===6?1:1-eio(prog(t,b-.25,b));
+ if(i!==lastScene){$('h1').textContent=HEAD[i][0];$('h2').innerHTML=HEAD[i][1]+(PILL[i]?`<br><span class="pill">${PILL[i]}</span>`:'');$('sub').innerHTML=SUB[i];lastScene=i;}
+ $('head').style.opacity=Math.min(hin,hout);$('head').style.transform=`translateY(${lerp(-40,0,hin)}px)`;$('head').style.filter=`blur(${lerp(12,0,hin)}px)`;
+ const sp=eo(prog(t,a+.25,a+.6));$('sub').style.opacity=Math.min(sp,hout);$('sub').style.transform=`translateY(${lerp(30,0,sp)}px)`;
+ // badges
+ const show=(id,on)=>{const p=on;$(id).style.opacity=p;$(id).style.transform=`scale(${lerp(.6,1,back(clamp(p)))})`;};
+ const height=Math.max(0,Math.round((960-c.y)/14));
+ $('hv').textContent=height;
+ show('bH',i===1||i===2?eo(prog(t,a+.3,a+.7))*hout:0);
+ const dropT=TL[3][0]+1.35;const spd=t<dropT?Math.round(lerp(0,8,prog(t,TL[1][0],dropT))):Math.round(lerp(8,104,eo(prog(t,dropT,dropT+1.6))));
+ $('sv').textContent=Math.min(spd,104);
+ show('bS',i===3?eo(prog(t,dropT,dropT+.3))*hout:0);
+ $('gv').textContent=(1+3.5*Math.sin(Math.PI*prog(t,TL[4][0]+.3,TL[4][1]-.4))).toFixed(1);
+ show('bG',i===4?eo(prog(t,a+.3,a+.7))*hout:0);
+ $('bv').textContent=Math.round(lerp(72,128,prog(t,0,TL[0][1])));
+ show('bB',i===0?eo(prog(t,.4,.8))*hout:0);
+ if(i===0){const beat=Math.pow(Math.max(0,Math.sin(t*Math.PI*2*1.6)),8);$('bB').style.transform+=` scale(${1+.08*beat})`;}
+ // CTA
+ const bp=prog(t,TL[6][0]+.8,TL[6][0]+1.3);
+ $('btn').style.opacity=bp;$('btn').style.transform=`translateX(-50%) scale(${lerp(.4,1,back(bp))*(1+.04*Math.sin((t-TL[6][0])*7)*prog(t,TL[6][0]+1.3,TL[6][0]+1.6))})`;
+ $('arr').style.display='inline-block';$('arr').style.transform=`translateX(${Math.sin(t*9)*10}px)`;
+ // flash + shake on the drop
+ $('flash').style.opacity=t>dropT?Math.max(0,.5*(1-prog(t,dropT,dropT+.4))):0;
+ const sh=t>dropT&&t<dropT+.8?(1-prog(t,dropT,dropT+.8))*14:0;
+ document.body.style.transform=`translate(${Math.sin(t*90)*sh}px,${Math.cos(t*70)*sh}px)`;
+};
+if(!window.__RENDER__){const t0=performance.now();(function l(){renderAt(((performance.now()-t0)/1000)%30);requestAnimationFrame(l)})();}
+</script></body></html>
