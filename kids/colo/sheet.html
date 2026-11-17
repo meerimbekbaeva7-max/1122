@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(../node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(#bff1ff,#e9f9ff);font-family:Fredoka,sans-serif}
+canvas{position:absolute;inset:0}
+.t{position:absolute;font-weight:700;color:#3b3b55}
+</style></head><body>
+<canvas id="gl" width="1920" height="1080"></canvas>
+<div class="t" style="left:60px;top:30px;font-size:120px;-webkit-text-stroke:14px #fff;paint-order:stroke fill"><span style="color:#2fd65a">C</span><span style="color:#ffc400">o</span><span style="color:#2f8bff">l</span><span style="color:#ff3b3b">o</span></div>
+<div class="t" style="left:70px;top:175px;font-size:40px">the color-changing baby chameleon 🌈</div>
+<div class="t" style="left:70px;top:235px;font-size:30px;color:#6b6b85">“Colo-colo-COLOR!”</div>
+<div class="t" style="left:0;width:640px;top:930px;text-align:center;font-size:34px">front</div>
+<div class="t" style="left:640px;width:420px;top:930px;text-align:center;font-size:34px">side</div>
+<div class="t" style="left:1060px;width:860px;top:930px;text-align:center;font-size:34px">changes color with every song!</div>
+<script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';import {makeColo} from './colo.js';
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,alpha:true,preserveDrawingBuffer:true});r.setPixelRatio(1);r.setSize(1920,1080,false);
+r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.15;r.setScissorTest(true);
+const views=[{x:0,w:640,rot:-.25,col:'#2fd65a',s:1.25,sing:.5},{x:640,w:420,rot:-1.2,col:'#2fd65a',s:.85,sing:0},
+ {x:1060,w:215,rot:-.35,col:'#ff3b3b',s:.9,sing:.2},{x:1275,w:215,rot:-.35,col:'#2f8bff',s:.9,sing:.8},{x:1490,w:215,rot:-.35,col:'#ffc400',s:.9,sing:.4},{x:1705,w:215,rot:-.35,col:'#ff5fa2',s:.9,sing:.1}];
+for(const v of views){const sc=new THREE.Scene();sc.add(new THREE.HemisphereLight('#ffffff','#9fe0b0',1.6));const d=new THREE.DirectionalLight('#fff',2.3);d.position.set(4,8,10);sc.add(d);sc.add(new THREE.AmbientLight('#fff',.35));
+ const c=makeColo(THREE,v.col);c.g.rotation.y=v.rot;c.mouth.scale.y=.25+v.sing;sc.add(c.g);
+ const sh=new THREE.Mesh(new THREE.CircleGeometry(1.6,40),new THREE.MeshBasicMaterial({color:'#000',transparent:true,opacity:.12}));sh.rotation.x=-Math.PI/2;sh.scale.y=.6;sc.add(sh);
+ const h=v.x>=1060?560:880,y0=v.x>=1060?330:60;const cam=new THREE.PerspectiveCamera(30,v.w/h,.1,100);cam.position.set(.4,1.7,(v.x>=1060?16:15.5)/v.s);cam.lookAt(.35,1.15,0);
+ r.setViewport(v.x,1080-y0-h,v.w,h);r.setScissor(v.x,1080-y0-h,v.w,h);r.render(sc,cam);}
+window.ready=true;
+</script></body></html>
