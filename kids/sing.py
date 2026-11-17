@@ -37,65 +37,87 @@ if len(sys.argv) > 1:
 INTRO_BEATS = int(os.environ.get("INTRO_BEATS", 8))
 TOTAL = INTRO_BEATS + 8 * len(SONG)
 
-voice = PiperVoice.load(str(ROOT.parent / "voice/models/en_US-amy-medium.onnx"))
-cfg = SynthesisConfig(length_scale=1.0, noise_scale=0.5, noise_w_scale=0.6)
+VOICE = os.environ.get("VOICE", "en_US-lessac-high")
+voice = PiperVoice.load(str(ROOT.parent / f"voice/models/{VOICE}.onnx"))
+cfg = SynthesisConfig(length_scale=1.0, noise_scale=0.4, noise_w_scale=0.5)
+FP = 5.0  # WORLD frame period, ms
 
 
 from functools import lru_cache
 
 @lru_cache(maxsize=None)
 def speak(word):
-    word = word.split('|')[-1]          # 'A|ay' -> sing 'ay', show 'A'
     buf = io.BytesIO()
     with wave.open(buf, "wb") as wf:
-        voice.synthesize_wav(word.strip(",!").lower(), wf, syn_config=cfg)
+        voice.synthesize_wav(word, wf, syn_config=cfg)
     buf.seek(0); x, sr = sf.read(buf)
-    idx = np.where(np.abs(x) > 0.02)[0]
-    x = x[max(idx[0] - 200, 0): idx[-1] + 200]
+    idx = np.where(np.abs(x) > 0.015)[0]
+    x = x[max(idx[0] - 160, 0): idx[-1] + 160]
     return x.astype(np.float64), sr
 
 
+def fill_dropouts(f0, max_gap):
+    """Harvest sometimes reports a few unvoiced frames in the middle of a vowel -> rasp/glitch.
+    Bridge short gaps by interpolation; keep long gaps (real consonants)."""
+    f = f0.copy(); v = np.where(f > 0)[0]
+    if len(v) < 2: return f
+    for a, b in zip(v[:-1], v[1:]):
+        if 1 < b - a <= max_gap:
+            f[a:b + 1] = np.interp(np.arange(a, b + 1), [a, b], [f[a], f[b]])
+    return f
+
+
 _cache = {}
-def sing(word, notes, formant=1.10, vib=0.35):
-    key = (word.split('|')[-1].strip(',!?').lower(), tuple(map(tuple, notes)), formant, vib)
+def sing(word, notes, formant=1.0, vib=0.18, detune=0.0):
+    spoken = word.split('|')[-1].strip(',!?').lower().replace('_', ' ')
+    key = (spoken, tuple(map(tuple, notes)), formant, vib, detune)
     if key in _cache: return _cache[key].copy()
-    x, sr = speak(word.split('|')[-1].strip(',!?').lower())
-    f0, t = pw.harvest(x, sr, f0_floor=70, f0_ceil=600, frame_period=5.0)
+    x, sr = speak(spoken)
+    f0, t = pw.harvest(x, sr, f0_floor=90, f0_ceil=650, frame_period=FP)
+    f0 = fill_dropouts(f0, max_gap=int(35 / FP))
     sp = pw.cheaptrick(x, f0, t, sr); ap = pw.d4c(x, f0, t, sr)
     n = len(f0); voiced = np.where(f0 > 0)[0]
-    dur = sum(b for _, b in notes) * BEAT * 0.92          # small gap before next note
-    m = max(int(dur / 0.005), 10)
-    if len(voiced) == 0:
-        v0, v1 = 0, n - 1
-    else:
-        v0, v1 = voiced[0], voiced[-1]
+    dur = sum(b for _, b in notes) * BEAT * 0.985            # legato: almost no gap between notes
+    m = max(int(dur / (FP / 1000)), 10)
+    v0, v1 = (voiced[0], voiced[-1]) if len(voiced) else (0, n - 1)
     head, tail = v0, n - 1 - v1
     body_m = max(m - head - tail, 4)
-    # time map: consonant head/tail at natural speed, voiced body stretched
-    src = np.concatenate([np.arange(head), np.linspace(v0, v1, body_m), np.arange(v1 + 1, n)]).astype(float)
+    # time map: consonants at natural speed, vowel body stretched (ease the stretch so it doesn't "freeze")
+    u = np.linspace(0, 1, body_m); u = 0.5 - 0.5 * np.cos(np.pi * u) * 0.0 + (u - 0.5)  # linear, kept explicit
+    src = np.concatenate([np.arange(head), v0 + u * (v1 - v0), np.arange(v1 + 1, n)]).astype(float)
     m = len(src)
     i0 = np.floor(src).astype(int); fr = (src - i0)[:, None]; i1 = np.minimum(i0 + 1, n - 1)
     sp2 = sp[i0] * (1 - fr) + sp[i1] * fr; ap2 = ap[i0] * (1 - fr) + ap[i1] * fr
-    vmask = np.concatenate([np.zeros(head, bool), np.ones(body_m, bool), np.zeros(n - 1 - v1, bool)])
-    # pitch: lock voiced frames to the note(s), smooth glide, delayed vibrato
-    tot = sum(b for _, b in notes); f = np.zeros(m); acc = 0
-    bounds = []
+    srcf0 = f0[np.round(src).astype(int)]
+    vmask = srcf0 > 0
+    # a voiced body that is mostly voiced: bridge tiny holes created by the stretch
+    vmask[head:head + body_m] |= np.convolve(vmask[head:head + body_m].astype(float), np.ones(9) / 9, "same") > 0.5
+    # pitch line: notes -> scoop into each note, glide between notes, gentle late vibrato on long notes
+    tot = sum(b for _, b in notes); acc = 0; bounds = []
     for name, b in notes:
-        bounds.append((acc / tot, hz(name))); acc += b
+        bounds.append((acc / tot, hz(name) * 2 ** (detune / 1200), b)); acc += b
     pos = np.clip((np.arange(m) - head) / max(body_m, 1), 0, 1)
-    target = np.array([[h for s, h in bounds if s <= p][-1] for p in pos])
-    k = 8; target = np.convolve(np.pad(target, k, mode="edge"), np.ones(2 * k + 1) / (2 * k + 1), "valid")
-    tt = np.arange(m) * 0.005
-    vib_env = np.clip((tt - 0.15) / 0.2, 0, 1)
-    f = target * 2 ** (vib / 12 * np.sin(2 * np.pi * 5.5 * tt) * vib_env / 1)
+    idx = np.array([max(i for i, (s0, _, _) in enumerate(bounds) if s0 <= p) for p in pos])
+    target = np.array([bounds[i][1] for i in idx])
+    tt = np.arange(m) * FP / 1000
+    # note-local time (for scoop + vibrato)
+    start_t = np.array([bounds[i][0] for i in idx]) * (body_m * FP / 1000) + head * FP / 1000
+    lt = np.maximum(tt - start_t, 0)
+    scoop = 2 ** (-0.35 / 12 * np.exp(-lt / 0.05))            # start ~35 cents flat, settle in ~50 ms
+    k = 6; target = np.exp(np.convolve(np.pad(np.log(target), k, mode="edge"), np.ones(2 * k + 1) / (2 * k + 1), "valid"))
+    long_note = np.array([bounds[i][2] * BEAT >= 0.45 for i in idx])
+    vib_env = np.clip((lt - 0.22) / 0.25, 0, 1) * long_note
+    f = target * scoop * 2 ** (vib / 12 * np.sin(2 * np.pi * 5.2 * tt) * vib_env)
     f[~vmask] = 0
-    # cartoon formant lift: stretch spectral envelope upward
-    bins = sp2.shape[1]; src_bins = np.arange(bins) / formant
-    sp3 = np.array([np.interp(src_bins, np.arange(bins), row) for row in sp2])
-    y = pw.synthesize(f, np.ascontiguousarray(sp3), np.ascontiguousarray(ap2), sr, 5.0)
+    # cleaner, less buzzy voiced frames
+    ap2 = np.where(vmask[:, None], np.minimum(ap2, 0.35 + 0.65 * ap2 ** 2), ap2)
+    if formant != 1.0:
+        bins = sp2.shape[1]; src_bins = np.arange(bins) / formant
+        sp2 = np.array([np.interp(src_bins, np.arange(bins), row) for row in sp2])
+    y = pw.synthesize(f, np.ascontiguousarray(sp2), np.ascontiguousarray(ap2), sr, FP)
     y = resample_poly(y, SR, sr)
-    L = len(y); fade = int(0.012 * SR)
-    y[:fade] *= np.linspace(0, 1, fade); y[-fade * 3:] *= np.linspace(1, 0, fade * 3)
+    fi, fo = int(0.006 * SR), int(0.03 * SR)
+    y[:fi] *= np.linspace(0, 1, fi) ** 0.5; y[-fo:] *= np.cos(np.linspace(0, np.pi / 2, fo))
     _cache[key] = y
     return y.copy()
 
@@ -112,9 +134,9 @@ for li, (tag, words) in enumerate(SONG):
         word, notes = w
         y = sing(word, notes)
         s = int(beat * BEAT * SR); vox[s:s + len(y)] += y
-        if tag in ("chorus", "all", "vroom", "bye") or tag.startswith("ch"):         # light "kids choir" double on the chorus
-            y2 = sing(word, notes, formant=1.22, vib=0.25)
-            dbl[s + 400:s + 400 + len(y2)] += y2
+        if tag in ("chorus", "all", "vroom", "bye") or tag.startswith("ch"):   # subtle double-track on choruses
+            y2 = sing(word, notes, vib=0.12, detune=9)
+            d = int(0.022 * SR); dbl[s + d:s + d + len(y2)] += y2
         b = sum(n for _, n in notes)
         wl.append({"w": word.split("|")[0], "t0": round(beat * BEAT, 3), "t1": round((beat + b) * BEAT, 3)})
         beat += b
@@ -122,8 +144,25 @@ for li, (tag, words) in enumerate(SONG):
     lines.append({"tag": tag, "t0": round((INTRO_BEATS + 8 * li) * BEAT, 3),
                   "t1": round((INTRO_BEATS + 8 * li + 8) * BEAT, 3), "words": wl})
 
+# ---- vocal polish: de-ess, presence, gentle compression, small room reverb ----
+from scipy.signal import butter, sosfilt, fftconvolve
+def polish(v):
+    v = sosfilt(butter(2, 90, "high", fs=SR, output="sos"), v)
+    hi = sosfilt(butter(2, 6500, "high", fs=SR, output="sos"), v)
+    env = np.sqrt(np.convolve(hi ** 2, np.ones(240) / 240, "same")); thr = np.percentile(env, 97)
+    v = v - hi * np.clip(1 - thr / (env + 1e-9), 0, 0.6)                # de-esser
+    v = v + 0.25 * sosfilt(butter(2, [2500, 5000], "band", fs=SR, output="sos"), v)   # presence
+    e = np.sqrt(np.convolve(v ** 2, np.ones(480) / 480, "same")) + 1e-6
+    g = np.clip((e / np.percentile(e[e > 1e-4], 90)) ** -0.35, 0.5, 2.0)   # ~3:1 soft compression
+    g = np.convolve(g, np.ones(480) / 480, "same"); v = v * g
+    rng = np.random.default_rng(0); L = int(0.9 * SR); tt = np.arange(L) / SR
+    ir = rng.standard_normal(L) * np.exp(-tt * 6.5); ir = sosfilt(butter(1, 5000, "low", fs=SR, output="sos"), ir); ir[:int(.012 * SR)] = 0
+    wet = fftconvolve(v, ir)[:len(v)]; wet *= np.std(v) / (np.std(wet) + 1e-9)
+    return v + 0.16 * wet
+vox = polish(vox)
+if np.abs(dbl).max() > 0: dbl = polish(dbl)
 vox = vox / (np.abs(vox).max() + 1e-9) * 0.9
-mix = vox + 0.45 * dbl / (np.abs(dbl).max() + 1e-9)
+mix = vox + 0.28 * dbl / (np.abs(dbl).max() + 1e-9) * (np.abs(vox).max())
 mix = mix[: int(TOTAL * BEAT * SR)]
 sf.write(OUT / "vocals.wav", (mix / np.abs(mix).max() * 0.9).astype(np.float32), SR)
 json.dump({"bpm": BPM, "beat": BEAT, "duration": TOTAL * BEAT, "intro": INTRO_BEATS * BEAT, "lines": lines,
