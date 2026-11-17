@@ -17,7 +17,8 @@ ROOT = pathlib.Path(__file__).parent
 import sys
 OUT = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "build"; OUT.mkdir(exist_ok=True)
 SR = 48000
-BPM = 112; BEAT = 60 / BPM
+import os
+BPM = float(os.environ.get('BPM', 112)); BEAT = 60 / BPM
 NOTE = {n: i for i, n in enumerate("C C# D D# E F F# G G# A A# B".split())}
 def hz(name):
     n, o = name[:-1], int(name[-1]); return 440 * 2 ** ((NOTE[n] + 12 * (o + 1) - 69) / 12)
@@ -40,7 +41,11 @@ voice = PiperVoice.load(str(ROOT.parent / "voice/models/en_US-amy-medium.onnx"))
 cfg = SynthesisConfig(length_scale=1.0, noise_scale=0.5, noise_w_scale=0.6)
 
 
+from functools import lru_cache
+
+@lru_cache(maxsize=None)
 def speak(word):
+    word = word.split('|')[-1]          # 'A|ay' -> sing 'ay', show 'A'
     buf = io.BytesIO()
     with wave.open(buf, "wb") as wf:
         voice.synthesize_wav(word.strip(",!").lower(), wf, syn_config=cfg)
@@ -50,8 +55,11 @@ def speak(word):
     return x.astype(np.float64), sr
 
 
+_cache = {}
 def sing(word, notes, formant=1.10, vib=0.35):
-    x, sr = speak(word)
+    key = (word.split('|')[-1].strip(',!?').lower(), tuple(map(tuple, notes)), formant, vib)
+    if key in _cache: return _cache[key].copy()
+    x, sr = speak(word.split('|')[-1].strip(',!?').lower())
     f0, t = pw.harvest(x, sr, f0_floor=70, f0_ceil=600, frame_period=5.0)
     sp = pw.cheaptrick(x, f0, t, sr); ap = pw.d4c(x, f0, t, sr)
     n = len(f0); voiced = np.where(f0 > 0)[0]
@@ -88,7 +96,8 @@ def sing(word, notes, formant=1.10, vib=0.35):
     y = resample_poly(y, SR, sr)
     L = len(y); fade = int(0.012 * SR)
     y[:fade] *= np.linspace(0, 1, fade); y[-fade * 3:] *= np.linspace(1, 0, fade * 3)
-    return y
+    _cache[key] = y
+    return y.copy()
 
 
 vox = np.zeros(int(TOTAL * BEAT * SR) + SR)
@@ -103,11 +112,11 @@ for li, (tag, words) in enumerate(SONG):
         word, notes = w
         y = sing(word, notes)
         s = int(beat * BEAT * SR); vox[s:s + len(y)] += y
-        if tag in ("chorus", "all", "vroom", "bye"):         # light "kids choir" double on the chorus
+        if tag in ("chorus", "all", "vroom", "bye") or tag.startswith("ch"):         # light "kids choir" double on the chorus
             y2 = sing(word, notes, formant=1.22, vib=0.25)
             dbl[s + 400:s + 400 + len(y2)] += y2
         b = sum(n for _, n in notes)
-        wl.append({"w": word, "t0": round(beat * BEAT, 3), "t1": round((beat + b) * BEAT, 3)})
+        wl.append({"w": word.split("|")[0], "t0": round(beat * BEAT, 3), "t1": round((beat + b) * BEAT, 3)})
         beat += b
         print(f"{li} {word:9s} ok")
     lines.append({"tag": tag, "t0": round((INTRO_BEATS + 8 * li) * BEAT, 3),

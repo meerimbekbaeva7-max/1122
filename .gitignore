@@ -6,3 +6,6 @@ coaster/build/
 kids/node_modules/
 kids/build/
 kids/build_car/
+kids/build_*/
+kids/comp/*.mp4
+kids/comp/*.log

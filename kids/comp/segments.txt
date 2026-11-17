@@ -1,0 +1,9 @@
+shapes|learn.html?d=build_shapes|build_shapes/mix.wav
+abc|learn.html?d=build_abc|build_abc/mix.wav
+animals|learn.html?d=build_animals|build_animals/mix.wav
+fruits|learn.html?d=build_fruits|build_fruits/mix.wav
+vehicles|learn.html?d=build_vehicles|build_vehicles/mix.wav
+planets|learn.html?d=build_planets|build_planets/mix.wav
+numbers|learn.html?d=build_numbers|build_numbers/mix.wav
+colors|scene_16x9.html|build/mix.wav
+car|car_scene_16x9.html|build_car/mix.wav
