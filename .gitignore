@@ -1,3 +1,4 @@
 video/build/
 __pycache__/
 voice/models/
+voice/*.wav
