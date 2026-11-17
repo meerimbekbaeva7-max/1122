@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(../node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+html,body{margin:0;width:640px;height:300px;overflow:hidden;background:transparent;font-family:Fredoka,sans-serif}
+#wrap{position:absolute;inset:0}
+.btn{position:absolute;left:30px;top:60px;height:110px;width:400px;box-sizing:border-box;justify-content:center;border-radius:60px;background:#ff1f1f;color:#fff;font-weight:700;font-size:46px;display:flex;align-items:center;gap:16px;
+ box-shadow:0 10px 0 rgba(0,0,0,.18);border:6px solid #fff;white-space:nowrap}
+.btn .ic{width:66px;height:48px;border-radius:14px;background:#fff;position:relative}
+.btn .ic:after{content:"";position:absolute;left:25px;top:12px;border-left:22px solid #ff1f1f;border-top:12px solid transparent;border-bottom:12px solid transparent}
+.like{position:absolute;left:460px;top:50px;width:130px;height:130px;border-radius:50%;background:#fff;border:6px solid #fff;box-shadow:0 10px 0 rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center}
+.ask{position:absolute;left:0;right:0;top:206px;text-align:center;font-weight:700;font-size:44px;color:#fff;-webkit-text-stroke:10px #2f8bff;paint-order:stroke fill}
+.hand{position:absolute;width:110px;height:110px}
+.heart{position:absolute;font-size:44px}
+</style></head><body><div id="wrap">
+<div class="btn" id="btn"><div class="ic" id="ic"></div><span id="bt">SUBSCRIBE</span></div>
+<div class="like" id="like"><svg id="th" viewBox="0 0 24 24" width="80" height="80"><path id="thp" d="M2 21h4V9H2v12zm20-11c0-1.1-.9-2-2-2h-6.3l1-4.6v-.3c0-.4-.2-.8-.4-1.1L13.2 1 6.6 7.6C6.2 7.9 6 8.4 6 9v10c0 1.1.9 2 2 2h9c.8 0 1.5-.5 1.8-1.2l3-7.1c.1-.2.2-.5.2-.7v-2z" fill="#3b3b55"/></svg></div>
+<div class="ask" id="ask">Ask a grown-up! 👍</div>
+<svg class="hand" id="hand" viewBox="0 0 64 64"><path d="M26 8c2.8 0 5 2.2 5 5v15l1.6-.5c2.6-.8 5.2.8 5.8 3.4l.2.9 1.4-.3c2.6-.6 5.1 1 5.7 3.6l.2.9 1-.1c2.7-.3 5.1 1.6 5.4 4.3l.7 7.8c.6 6.4-2.8 12.4-8.6 15.1L41 64H25l-11-15.8c-1.6-2.3-1.1-5.4 1.1-7.1 2.1-1.6 5.1-1.4 7 .5L21 42V13c0-2.8 2.2-5 5-5z" fill="#fff" stroke="#222" stroke-width="2.6"/></svg>
+<div id="hearts"></div>
+</div>
+<script>
+const $=id=>document.getElementById(id),clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),prog=(t,a,b)=>clamp((t-a)/(b-a));
+const back=x=>{const c=2.4;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},eo=x=>1-Math.pow(1-x,3),lerp=(a,b,x)=>a+(b-a)*x;
+const H=$('hearts');for(let i=0;i<7;i++){const d=document.createElement('div');d.className='heart';d.textContent=['❤️','💙','💛','💚'][i%4];H.appendChild(d);}
+const D=4;
+window.renderAt=t=>{
+ const out=1-eo(prog(t,D-.45,D));
+ // subscribe button pops in
+ const pb=back(prog(t,.05,.45));$('btn').style.transform=`scale(${Math.max(.001,pb*out)})`;$('btn').style.transformOrigin='left center';
+ // hand glides in and taps at 1.2s
+ const tap=1.25,hp=eo(prog(t,.45,tap));const press=t>tap&&t<tap+.25?.85:1;
+ $('hand').style.left=lerp(380,250,hp)+'px';$('hand').style.top=lerp(300,110,hp)+'px';$('hand').style.opacity=prog(t,.45,.6)*(1-prog(t,2.2,2.5));
+ $('hand').style.transform=`scale(${press}) rotate(-15deg)`;
+ const subbed=t>tap+.1;$('btn').style.background=subbed?'#8a8a99':'#ff1f1f';$('bt').textContent=subbed?'SUBSCRIBED ✓':'SUBSCRIBE';
+ $('ic').style.display=subbed?'none':'block';
+ if(subbed){const k=prog(t,tap+.1,tap+.4);$('btn').style.transform=`scale(${Math.max(.001,(1+.12*Math.sin(Math.PI*k))*out)})`;}
+ // like pops at 1.7s, turns blue at 2.2s
+ const lp=back(prog(t,1.7,2.05));$('like').style.transform=`scale(${Math.max(.001,lp*out)}) rotate(${Math.sin(t*6)*6}deg)`;
+ const liked=t>2.2;$('thp').setAttribute('fill',liked?'#ffffff':'#3b3b55');$('like').style.background=liked?'#2f8bff':'#fff';
+ if(liked){const k=prog(t,2.2,2.5);$('like').style.transform=`scale(${Math.max(.001,lp*out*(1+.2*Math.sin(Math.PI*k)))})`;}
+ [...H.children].forEach((h,i)=>{const k=prog(t,2.2+i*.04,3.2+i*.04);const a=-Math.PI/2+(i-3)*.45;
+  h.style.left=(515+Math.cos(a)*(70+k*120))+"px";h.style.top=(95+Math.sin(a)*(70+k*100))+"px";h.style.opacity=k>0?(1-k):0;h.style.transform=`scale(${.6+k})`;});
+ const ap=back(prog(t,.6,1.0));$('ask').style.transform=`scale(${Math.max(.001,ap*out)})`;
+};
+document.fonts.ready.then(()=>window.ready=true);
+</script></body></html>
