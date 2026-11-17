@@ -1,0 +1,70 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(../node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+html,body{margin:0;width:2048px;height:1152px;overflow:hidden}
+svg{display:block}
+</style></head><body>
+<svg id="s" width="2048" height="1152" viewBox="0 0 2048 1152">
+<defs>
+ <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3ec4ff"/><stop offset=".65" stop-color="#8fe3ff"/><stop offset="1" stop-color="#d8f6ff"/></linearGradient>
+ <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0a4f80" flood-opacity=".22"/></filter>
+</defs>
+<rect width="2048" height="1152" fill="url(#sky)"/>
+<g id="rays" opacity=".22" transform="translate(1024 640)"></g>
+<!-- hills -->
+<ellipse cx="300" cy="1250" rx="700" ry="330" fill="#8ff07a"/><ellipse cx="1760" cy="1260" rx="720" ry="340" fill="#8ff07a"/>
+<ellipse cx="1024" cy="1330" rx="1300" ry="380" fill="#5fdc4f"/>
+<!-- big rainbow behind the title -->
+<g filter="url(#soft)" fill="none" stroke-linecap="round" id="rainbow"></g>
+<g id="clouds" filter="url(#soft)"></g>
+<g id="deco" filter="url(#soft)"></g>
+<g id="sp" fill="#fff"></g>
+<g id="plates"></g>
+<g font-family="Fredoka" font-weight="700" text-anchor="middle">
+ <text x="1024" y="610" font-size="190" id="title"></text>
+</g>
+<g id="tagPlate"></g>
+<text x="1024" y="712" font-family="Fredoka" font-weight="700" font-size="54" text-anchor="middle" fill="#3b3b55" id="tag">Fun Learning Songs for Kids</text>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg',el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+const $=id=>document.getElementById(id);const C=['#ff3b3b','#ff8a00','#ffc400','#2fd65a','#2f8bff','#7b5bff','#ff5fa2'];
+for(let i=0;i<24;i++){const a=i/24*Math.PI*2,b=(i+.5)/24*Math.PI*2;el('path',{d:`M0 0 L${Math.cos(a)*1600} ${Math.sin(a)*1600} L${Math.cos(b)*1600} ${Math.sin(b)*1600}Z`,fill:'#fff'},$('rays'));}
+['#ff3b3b','#ff8a00','#ffc400','#2fd65a','#2f8bff','#7b5bff'].forEach((c,i)=>{const r=560-i*52;el('path',{d:`M${1024-r} 760 A${r} ${r} 0 0 1 ${1024+r} 760`,stroke:c,'stroke-width':54},$('rainbow'));});
+function cloud(cx,cy,s,flip,faceOn=true){const g=el('g',{transform:`translate(${cx} ${cy}) scale(${s*(flip?-1:1)} ${s})`},$('clouds'));
+ [[-58,10,46],[0,-14,62],[60,8,48],[-20,30,46],[30,32,46]].forEach(([x,y,r])=>el('circle',{cx:x,cy:y,r,fill:'#fff'},g));
+ if(!faceOn)return;for(const x of[-22,22]){el('ellipse',{cx:x,cy:4,rx:10,ry:14,fill:'#1b1b2f'},g);el('circle',{cx:x+3,cy:-1,r:4,fill:'#fff'},g);}
+ for(const x of[-44,44])el('ellipse',{cx:x,cy:22,rx:12,ry:7,fill:'#ff8fb1',opacity:.8},g);
+ el('path',{d:'M-14 24 Q0 40 14 24',stroke:'#1b1b2f','stroke-width':6,fill:'none','stroke-linecap':'round'},g);}
+cloud(590,770,1.5,false);cloud(1458,770,1.5,true);cloud(170,170,.9,false,false);cloud(1880,150,.9,true,false);cloud(1300,110,.7,false,false);cloud(700,120,.6,false,false);
+const D=$('deco');
+// balloons with numbers (left)
+[[150,520,'1','#ff3b3b'],[280,420,'2','#2f8bff'],[110,690,'3','#ffc400']].forEach(([x,y,n,c],i)=>{
+ el('path',{d:`M${x} ${y+78} q-12 60 6 120`,stroke:'#fff','stroke-width':3,fill:'none'},D);
+ el('ellipse',{cx:x,cy:y,rx:64,ry:76,fill:c},D);el('ellipse',{cx:x-22,cy:y-30,rx:12,ry:20,fill:'#fff',opacity:.5},D);
+ el('path',{d:`M${x-10} ${y+74} l10 14 l10 -14z`,fill:c},D);
+ const t=el('text',{x,y:y+26,'font-family':'Fredoka','font-weight':700,'font-size':78,'text-anchor':'middle',fill:'#fff'},D);t.textContent=n;});
+// letters (right)
+[[1890,520,'A','#ff3b3b',-12],[1770,430,'B','#2fd65a',10],[1930,700,'C','#2f8bff',-6]].forEach(([x,y,ch,c,r])=>{
+ const t=el('text',{x,y,'font-family':'Fredoka','font-weight':700,'font-size':150,'text-anchor':'middle',fill:c,stroke:'#fff','stroke-width':14,'paint-order':'stroke',transform:`rotate(${r} ${x} ${y})`},D);t.textContent=ch;});
+// shapes (bottom corners) with faces
+function faceAt(x,y,s){for(const dx of[-14,14]){el('ellipse',{cx:x+dx*s,cy:y,rx:6*s,ry:8*s,fill:'#1b1b2f'},D);el('circle',{cx:x+dx*s+2*s,cy:y-3*s,r:2.2*s,fill:'#fff'},D);}
+ el('path',{d:`M${x-8*s} ${y+12*s} Q${x} ${y+22*s} ${x+8*s} ${y+12*s}`,stroke:'#1b1b2f','stroke-width':4*s,fill:'none','stroke-linecap':'round'},D);}
+const star=(x,y,r,c)=>{let d='';for(let i=0;i<10;i++){const rr=i%2?r*.45:r,a=-Math.PI/2+i*Math.PI/5;d+=(i?'L':'M')+(x+Math.cos(a)*rr)+' '+(y+Math.sin(a)*rr);}el('path',{d:d+'Z',fill:c,stroke:'#fff','stroke-width':8,'stroke-linejoin':'round'},D);};
+star(400,1000,90,'#ffc400');faceAt(400,1005,1.6);
+el('path',{d:'M1660 1060 C1540 980 1560 880 1660 930 C1760 880 1780 980 1660 1060Z',fill:'#ff5fa2',stroke:'#fff','stroke-width':8},D);faceAt(1660,975,1.5);
+el('circle',{cx:200,cy:960,r:70,fill:'#ff3b3b',stroke:'#fff','stroke-width':8},D);faceAt(200,960,1.4);
+el('rect',{x:1800,y:880,width:140,height:140,rx:26,fill:'#2f8bff',stroke:'#fff','stroke-width':8},D);faceAt(1870,945,1.4);
+el('path',{d:'M620 1080 L700 940 L780 1080Z',fill:'#2fd65a',stroke:'#fff','stroke-width':8,'stroke-linejoin':'round'},D);faceAt(700,1035,1.1);
+el('circle',{cx:1400,cy:1040,r:55,fill:'#ff8a00',stroke:'#fff','stroke-width':8},D);faceAt(1400,1040,1.2);
+// sparkles
+[[1024,250,30],[760,330,18],[1290,320,20],[560,260,12],[1490,250,14],[880,190,10],[1170,180,10],[330,300,14],[1700,300,14]].forEach(([x,y,r])=>el('path',{d:`M${x} ${y-r} Q${x} ${y} ${x+r} ${y} Q${x} ${y} ${x} ${y+r} Q${x} ${y} ${x-r} ${y} Q${x} ${y} ${x} ${y-r}Z`},$('sp')));
+// title letters, sticker plates
+const T=$('title');[...'Baby Color'].forEach((ch,i)=>{const s=el('tspan',{fill:ch===' '?'none':C[(i+6)%7],dy:i%2?-10:10},T);s.textContent=ch;});
+document.fonts.ready.then(()=>{
+ const b=T.getBBox(),pad=34;
+ el('rect',{x:b.x-pad,y:b.y-pad+28,width:b.width+pad*2,height:b.height+pad*2-44,rx:70,fill:'#000',opacity:.16,transform:'translate(0 12)'},$('plates'));
+ el('rect',{x:b.x-pad,y:b.y-pad+28,width:b.width+pad*2,height:b.height+pad*2-44,rx:70,fill:'#fff'},$('plates'));
+ const tb=$('tag').getBBox(),tp=26;
+ el('rect',{x:tb.x-tp*1.6,y:tb.y-tp*.55,width:tb.width+tp*3.2,height:tb.height+tp*1.1,rx:(tb.height+tp*1.1)/2,fill:'#ffc400',stroke:'#fff','stroke-width':6},$('tagPlate'));
+ window.ready=true;});
+</script></body></html>
