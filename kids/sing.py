@@ -14,7 +14,8 @@ from piper import PiperVoice
 from piper.config import SynthesisConfig
 
 ROOT = pathlib.Path(__file__).parent
-OUT = ROOT / "build"; OUT.mkdir(exist_ok=True)
+import sys
+OUT = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "build"; OUT.mkdir(exist_ok=True)
 SR = 48000
 BPM = 112; BEAT = 60 / BPM
 NOTE = {n: i for i, n in enumerate("C C# D D# E F F# G G# A A# B".split())}
@@ -30,6 +31,8 @@ SONG = [
     ("chorus",[("Colors,", [("E4", .5), ("G4", .5)]), ("colors,", [("E4", .5), ("G4", .5)]), ("sing", [("C5", 1)]), ("with", [("B4", 1)]), ("me!", [("C5", 2)]), None]),
     ("all",   [("Red,", [("C5", 1)]), ("blue,", [("A4", 1)]), ("yellow,", [("G4", .5), ("E4", .5)]), ("green!", [("C5", 3)]), None]),
 ]
+if len(sys.argv) > 1:
+    SONG = [(t, [None if w is None else (w[0], [tuple(n) for n in w[1]]) for w in ws]) for t, ws in json.load(open(sys.argv[1]))]
 INTRO_BEATS = 8
 TOTAL = INTRO_BEATS + 8 * len(SONG)
 
@@ -100,7 +103,7 @@ for li, (tag, words) in enumerate(SONG):
         word, notes = w
         y = sing(word, notes)
         s = int(beat * BEAT * SR); vox[s:s + len(y)] += y
-        if tag in ("chorus", "all"):         # light "kids choir" double on the chorus
+        if tag in ("chorus", "all", "vroom", "bye"):         # light "kids choir" double on the chorus
             y2 = sing(word, notes, formant=1.22, vib=0.25)
             dbl[s + 400:s + 400 + len(y2)] += y2
         b = sum(n for _, n in notes)

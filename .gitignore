@@ -5,3 +5,4 @@ voice/*.wav
 coaster/build/
 kids/node_modules/
 kids/build/
+kids/build_car/

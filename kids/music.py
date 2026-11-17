@@ -1,10 +1,11 @@
 """Bright kids' backing track for the Colors Song + final mix -> build/mix.wav"""
-import json
+import json, sys, os
+BD = sys.argv[1] if len(sys.argv) > 1 else "build"
 import numpy as np, soundfile as sf
 from scipy.signal import butter, sosfilt
 
 SR = 48000
-song = json.load(open("build/song.json"))
+song = json.load(open(f"{BD}/song.json"))
 B = song["beat"]; DUR = song["duration"]; N = int(DUR * SR); rng = np.random.default_rng(5)
 t = np.arange(N) / SR
 NOTE = {n: i for i, n in enumerate("C C# D D# E F F# G G# A A# B".split())}
@@ -37,7 +38,7 @@ def shaker(a=.05):
 
 # chords: per line, 4 chords x 2 beats ; intro first
 CH = {"C": [60, 64, 67, 72], "F": [60, 65, 69, 72], "G": [59, 62, 67, 71], "Am": [60, 64, 69, 72]}
-prog = [["C", "F", "G", "C"], ["C", "C", "F", "C"], ["F", "F", "C", "F"], ["C", "C", "G", "C"],
+prog = json.load(open(sys.argv[2])) if len(sys.argv) > 2 else [["C", "F", "G", "C"], ["C", "C", "F", "C"], ["F", "F", "C", "F"], ["C", "C", "G", "C"],
         ["F", "G", "C", "C"], ["C", "C", "G", "C"], ["C", "F", "C", "C"]]
 for li, p in enumerate(prog):
     for k, c in enumerate(p):
@@ -67,17 +68,17 @@ for k, n in enumerate(["C6", "E6", "G6", "C7"]):
 
 music = out["mel"] + out["uke"] + out["bass"] + out["drum"]
 music /= np.abs(music).max()
-vox, _ = sf.read("build/vocals.wav")
+vox, _ = sf.read(f"{BD}/vocals.wav")
 vox = np.pad(vox, (0, max(0, N - len(vox))))[:N]
 mix = vox * 1.0 + music * 0.55
 d = int(.01 * SR)
 st = np.stack([mix, np.concatenate([np.zeros(d), music[:-d]]) * .55 + vox], 1)
 st = np.tanh(st * 1.3) / np.tanh(1.3); st *= .95 / np.abs(st).max()
 st *= np.clip((DUR - t) / .4, 0, 1)[:, None]
-sf.write("build/mix.wav", st.astype(np.float32), SR)
+sf.write(f"{BD}/mix.wav", st.astype(np.float32), SR)
 # per-frame vocal envelope (30 fps) for mouth sync
 fps = 30; hop = SR // fps
 env = np.array([np.sqrt(np.mean(vox[i:i + hop] ** 2)) for i in range(0, N, hop)])
 env = np.clip(env / (np.percentile(env, 98) + 1e-9), 0, 1)
-json.dump([round(float(v), 3) for v in env], open("build/env.json", "w"))
+json.dump([round(float(v), 3) for v in env], open(f"{BD}/env.json", "w"))
 print("mix ok", DUR)
