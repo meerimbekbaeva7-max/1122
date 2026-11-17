@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(../node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(#5fc8ff,#bdeaff 60%,#e9f9ff);font-family:Fredoka,sans-serif}
+canvas{position:absolute;inset:0}.t{position:absolute;font-weight:700;color:#3b3b55}
+</style></head><body>
+<canvas id="gl" width="1920" height="1080"></canvas>
+<div class="t" style="left:60px;top:30px;font-size:130px;-webkit-text-stroke:14px #fff;paint-order:stroke fill"><span style="color:#ff5fa2">L</span><span style="color:#ffc400">u</span><span style="color:#2fd65a">l</span><span style="color:#2f8bff">u</span></div>
+<div class="t" style="left:70px;top:185px;font-size:40px">the little rainbow cloud ☁️🌈</div>
+<div class="t" style="left:70px;top:245px;font-size:30px;color:#4a5a7a">“Lulu-lulu-RAINBOW!” · Rainbow Tots</div>
+<div class="t" style="left:0;width:760px;top:960px;text-align:center;font-size:34px">Lulu</div>
+<div class="t" style="left:760px;width:1160px;top:960px;text-align:center;font-size:34px">happy · singing · surprised · rainbow rain!</div>
+<script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';import {makeLulu} from './lulu.js';
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,alpha:true,preserveDrawingBuffer:true});r.setPixelRatio(1);r.setSize(1920,1080,false);
+r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.1;r.setScissorTest(true);
+const views=[{x:0,y:300,w:760,h:640,rot:-.25,mouth:.35,drops:false,d:11},
+ {x:760,y:420,w:290,h:520,rot:-.3,mouth:0,drops:false,d:13,eyes:1},{x:1050,y:420,w:290,h:520,rot:.25,mouth:1,drops:false,d:13},
+ {x:1340,y:420,w:290,h:520,rot:-.1,mouth:.8,drops:false,d:13,surprise:true},{x:1630,y:420,w:290,h:520,rot:.2,mouth:.5,drops:true,d:13}];
+for(const v of views){const sc=new THREE.Scene();sc.add(new THREE.HemisphereLight('#ffffff','#9fd0ff',1.5));const dl=new THREE.DirectionalLight('#fff',2.0);dl.position.set(4,8,10);sc.add(dl);sc.add(new THREE.AmbientLight('#fff',.45));
+ const L=makeLulu(THREE);L.g.rotation.y=v.rot;L.mouth.scale.y=.25+v.mouth;L.drops.visible=v.drops;if(v.drops)L.setDrops(.35);
+ if(v.surprise){L.eyes.forEach(e=>e.scale.set(1.15,1.25,1));L.mouth.scale.set(.7,1.6,1);L.arms.forEach((a,i)=>a.position.y+=.5);}
+ if(v.mouth>=1)L.arms.forEach((a,i)=>{a.position.y+=.6;});
+ sc.add(L.g);const sh=new THREE.Mesh(new THREE.CircleGeometry(1.5,40),new THREE.MeshBasicMaterial({color:'#2a4a7a',transparent:true,opacity:.12}));sh.rotation.x=-Math.PI/2;sh.scale.y=.5;sh.position.y=-.35;sc.add(sh);
+ if(v.drops)L.g.position.y=.4;
+ const cam=new THREE.PerspectiveCamera(30,v.w/v.h,.1,100);cam.position.set(0,1.7,v.d);cam.lookAt(0,1.2,0);
+ r.setViewport(v.x,1080-v.y-v.h,v.w,v.h);r.setScissor(v.x,1080-v.y-v.h,v.w,v.h);r.render(sc,cam);}
+window.ready=true;
+</script></body></html>

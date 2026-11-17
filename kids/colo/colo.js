@@ -1,4 +1,4 @@
-// Momo — the Rainbow Tots mascot (original character). makeColo(THREE, color) -> {g, body, mouth, eyes, tail, setColor}
+// Tiko — the Rainbow Tots chameleon (original character). makeColo(THREE, color) -> {g, body, mouth, eyes, tail, setColor}
 export function makeColo(THREE, color = '#2fd65a') {
   const std = (c, r = .3, e = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: 0, ...e });
   const skin = std(color, .28), skinDark = std(color, .35);
