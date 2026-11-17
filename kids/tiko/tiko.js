@@ -14,10 +14,11 @@ export function makeTiko(THREE, color = '#2fc7c0') {
   // rainbow back spikes, from head to tail
   const spikeCols = ['#ff2a2a', '#ff8a00', '#ffc400', '#2fd65a', '#2f8bff', '#7b5bff'];
   // place each spike on the surface (head then torso), pointing along the surface normal
-  const spots = [[0, 2.15, .12, 1.0, 12], [0, 2.15, .12, 1.0, 48], [0, 2.15, .12, 1.0, 85], [0, .95, 0, 1.0, 85], [0, .95, 0, 1.0, 118], [0, .95, 0, .98, 150]];
+  const spikes = [];
+  const spots = [[0, 2.15, .12, 1.0, 12], [0, 2.15, .12, 1.0, 48], [0, 2.15, .12, 1.0, 85], [0, .95, 0, 1.0, 58], [0, .95, 0, 1.0, 82], [0, .95, 0, .98, 106]];
   spots.forEach(([cx, cy, cz, r, deg], i) => { const a = deg * Math.PI / 180; const n = new THREE.Vector3(0, Math.cos(a), -Math.sin(a));
     const h = .8 - i * .05; const s = new THREE.Mesh(new THREE.ConeGeometry(.33 - i * .018, h, 24), std(spikeCols[i], .28));
-    s.position.set(cx, cy, cz).addScaledVector(n, r * .9 + h * .35); s.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n); s.scale.set(.7, 1, 1.15); body.add(s); });
+    s.position.set(cx, cy, cz).addScaledVector(n, r * .9 + h * .35); s.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n); s.scale.set(.7, 1, 1.15); body.add(s); spikes.push(s); });
   // eyes
   const eyes = [];
   for (const sx of [-1, 1]) {
@@ -39,12 +40,12 @@ export function makeTiko(THREE, color = '#2fc7c0') {
   for (const sx of [-1, 1]) { const a = new THREE.Group(); a.position.set(sx * .85, 1.25, .35); const arm = new THREE.Mesh(new THREE.CapsuleGeometry(.13, .28, 8, 16), skin); arm.rotation.z = sx * 1.0; arm.position.set(sx * .12, -.05, 0); a.add(arm); body.add(a); arms.push(a); }
   for (const sx of [-1, 1]) { const f = new THREE.Mesh(new THREE.SphereGeometry(.3, 24, 16), skinD); f.scale.set(1, .55, 1.35); f.position.set(sx * .45, .14, .2); body.add(f);
     for (const t of [-1, 0, 1]) { const c = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 8), cream); c.position.set(sx * .45 + t * .12, .12, .6); body.add(c); } }
-  const tailPts = [new THREE.Vector3(0, .7, -.7), new THREE.Vector3(.25, .45, -1.25), new THREE.Vector3(.7, .35, -1.6), new THREE.Vector3(1.15, .45, -1.75)];
+  const tailPts = [new THREE.Vector3(0, .42, -.62), new THREE.Vector3(.3, .25, -1.15), new THREE.Vector3(.8, .22, -1.45), new THREE.Vector3(1.25, .35, -1.55)];
   const tc = new THREE.CatmullRomCurve3(tailPts); const tgeo = new THREE.TubeGeometry(tc, 60, .32, 20, false);
   const pos = tgeo.attributes.position, uv = tgeo.attributes.uv;
   for (let i = 0; i < pos.count; i++) { const u = uv.getX(i); const c = tc.getPoint(u); const v = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i)).sub(c).multiplyScalar(1 - u * .8).add(c); pos.setXYZ(i, v.x, v.y, v.z); }
   tgeo.computeVertexNormals();
   const tail = new THREE.Mesh(tgeo, skin); body.add(tail);
   const tip = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 8), skin); tip.position.copy(tailPts[3]); body.add(tip);
-  return { g, body, mouth, eyes, arms, tail };
+  return { g, body, mouth, eyes, arms, tail, spikes };
 }
