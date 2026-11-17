@@ -70,7 +70,10 @@ music = out["mel"] + out["uke"] + out["bass"] + out["drum"]
 music /= np.abs(music).max()
 vox, _ = sf.read(f"{BD}/vocals.wav")
 vox = np.pad(vox, (0, max(0, N - len(vox))))[:N]
-mix = vox * 1.0 + music * 0.55
+MUSIC = float(os.environ.get('MUSIC_LEVEL', 0.55))
+if os.environ.get('DUCK') == '1':   # sidechain: music dips under the voice so words stay clear
+    ve = np.convolve(np.abs(vox), np.ones(2400) / 2400, "same"); music = music * (1 - 0.45 * np.clip(ve / (np.percentile(ve, 95) + 1e-9), 0, 1))
+mix = vox * 1.0 + music * MUSIC
 d = int(.01 * SR)
 st = np.stack([mix, np.concatenate([np.zeros(d), music[:-d]]) * .55 + vox], 1)
 st = np.tanh(st * 1.3) / np.tanh(1.3); st *= .95 / np.abs(st).max()

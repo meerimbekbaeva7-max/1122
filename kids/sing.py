@@ -41,6 +41,7 @@ VOICE = os.environ.get("VOICE", "en_US-lessac-high")
 voice = PiperVoice.load(str(ROOT.parent / f"voice/models/{VOICE}.onnx"))
 cfg = SynthesisConfig(length_scale=1.0, noise_scale=0.4, noise_w_scale=0.5)
 FP = 5.0  # WORLD frame period, ms
+CLEAN = os.environ.get('CLEAN') == '1'   # studio-clean lead: no double, tight room, gate, cleaner excitation
 
 
 from functools import lru_cache
@@ -111,6 +112,10 @@ def sing(word, notes, formant=1.0, vib=0.18, detune=0.0):
     f[~vmask] = 0
     # cleaner, less buzzy voiced frames
     ap2 = np.where(vmask[:, None], np.minimum(ap2, 0.35 + 0.65 * ap2 ** 2), ap2)
+    if CLEAN:  # less breath noise inside sung vowels (keeps consonants intact)
+        fq = np.linspace(0, sr / 2, ap2.shape[1])
+        clean = np.where(fq < 5000, 0.12, 0.5)[None, :]          # nearly pure harmonics below 5 kHz, a little air above
+        ap2 = np.where(vmask[:, None], np.minimum(ap2, ap2 * clean + 0.002), ap2)
     if formant != 1.0:
         bins = sp2.shape[1]; src_bins = np.arange(bins) / formant
         sp2 = np.array([np.interp(src_bins, np.arange(bins), row) for row in sp2])
@@ -134,7 +139,7 @@ for li, (tag, words) in enumerate(SONG):
         word, notes = w
         y = sing(word, notes)
         s = int(beat * BEAT * SR); vox[s:s + len(y)] += y
-        if tag in ("chorus", "all", "vroom", "bye") or tag.startswith("ch"):   # subtle double-track on choruses
+        if not CLEAN and (tag in ("chorus", "all", "vroom", "bye") or tag.startswith("ch")):   # subtle double-track on choruses
             y2 = sing(word, notes, vib=0.12, detune=9)
             d = int(0.022 * SR); dbl[s + d:s + d + len(y2)] += y2
         b = sum(n for _, n in notes)
@@ -158,8 +163,26 @@ def polish(v):
     rng = np.random.default_rng(0); L = int(0.9 * SR); tt = np.arange(L) / SR
     ir = rng.standard_normal(L) * np.exp(-tt * 6.5); ir = sosfilt(butter(1, 5000, "low", fs=SR, output="sos"), ir); ir[:int(.012 * SR)] = 0
     wet = fftconvolve(v, ir)[:len(v)]; wet *= np.std(v) / (np.std(wet) + 1e-9)
+    if CLEAN:
+        return v + 0.05 * sosfilt(butter(2, [300, 6000], 'band', fs=SR, output='sos'), fftconvolve(v, ir[:int(.35 * SR)])[:len(v)] * np.std(v) / (np.std(wet) + 1e-9))
     return v + 0.16 * wet
 vox = polish(vox)
+if CLEAN:
+    # broadcast EQ: cut mud, add clarity and air
+    vox = vox - 0.25 * sosfilt(butter(2, [220, 450], "band", fs=SR, output="sos"), vox)
+    vox = vox + 0.22 * sosfilt(butter(2, [2800, 4500], "band", fs=SR, output="sos"), vox)
+    vox = vox + 0.15 * sosfilt(butter(2, 9000, "high", fs=SR, output="sos"), vox)
+    # downward expander/gate: silence between words, smooth attack/release
+    env = np.sqrt(np.convolve(vox ** 2, np.ones(480) / 480, "same")); thr = np.percentile(env[env > 1e-5], 35) * 0.5
+    g = np.clip(env / thr, 0, 1) ** 2
+    k = int(0.04 * SR); g = np.maximum.accumulate(np.r_[g, np.zeros(k)][::-1])[::-1][:len(g)] if False else g
+    rel = np.exp(-1 / (0.08 * SR)); gs = np.empty_like(g); a = 0.0
+    for i in range(len(g)):
+        a = g[i] if g[i] > a else a * rel + g[i] * (1 - rel)
+        gs[i] = a
+    vox = vox * (0.03 + 0.97 * gs)
+    # peak limiter
+    vox = np.tanh(vox / (np.percentile(np.abs(vox), 99.9) + 1e-9) * 1.2) * 0.9
 if np.abs(dbl).max() > 0: dbl = polish(dbl)
 vox = vox / (np.abs(vox).max() + 1e-9) * 0.9
 mix = vox + 0.28 * dbl / (np.abs(dbl).max() + 1e-9) * (np.abs(vox).max())
