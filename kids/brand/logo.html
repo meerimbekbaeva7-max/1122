@@ -1,0 +1,58 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(../node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+html,body{margin:0;width:800px;height:800px;overflow:hidden;background:transparent}
+svg{display:block}
+</style></head><body>
+<svg width="800" height="800" viewBox="0 0 800 800">
+<defs>
+ <radialGradient id="bg" cx="50%" cy="42%" r="60%"><stop offset="0" stop-color="#bff1ff"/><stop offset=".6" stop-color="#5fd0ff"/><stop offset="1" stop-color="#2aa8f0"/></radialGradient>
+ <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="0" flood-color="#000" flood-opacity=".18"/></filter>
+ <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0a4f80" flood-opacity=".25"/></filter>
+ <filter id="fat" x="-10%" y="-30%" width="120%" height="160%"><feMorphology operator="dilate" radius="22"/></filter>
+ <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+</defs>
+<circle cx="400" cy="400" r="400" fill="url(#bg)"/>
+<!-- sunburst -->
+<g opacity=".28" transform="translate(400 420)">
+ <g id="rays"></g>
+</g>
+<!-- rainbow -->
+<g filter="url(#soft)" fill="none" stroke-linecap="round">
+ <path d="M150 430 A250 250 0 0 1 650 430" stroke="#ff3b3b" stroke-width="40"/>
+ <path d="M188 430 A212 212 0 0 1 612 430" stroke="#ff8a00" stroke-width="40"/>
+ <path d="M226 430 A174 174 0 0 1 574 430" stroke="#ffc400" stroke-width="40"/>
+ <path d="M264 430 A136 136 0 0 1 536 430" stroke="#2fd65a" stroke-width="40"/>
+ <path d="M302 430 A98 98 0 0 1 498 430" stroke="#2f8bff" stroke-width="40"/>
+</g>
+<!-- clouds with faces at the rainbow ends -->
+<g id="clouds" filter="url(#soft)"></g>
+<!-- sparkles -->
+<g fill="#fff" id="sp"></g>
+<!-- wordmark -->
+<g id="plates"></g>
+<g font-family="Fredoka" font-weight="700" text-anchor="middle">
+ <text x="400" y="528" font-size="132" id="baby"></text>
+ <text x="400" y="668" font-size="150" id="color"></text>
+</g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg',el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+const rays=document.getElementById('rays');for(let i=0;i<16;i++){const a=i/16*Math.PI*2,b=(i+.5)/16*Math.PI*2;el('path',{d:`M0 0 L${Math.cos(a)*600} ${Math.sin(a)*600} L${Math.cos(b)*600} ${Math.sin(b)*600}Z`,fill:'#fff'},rays);}
+function cloud(cx,cy,s,flip){const g=el('g',{transform:`translate(${cx} ${cy}) scale(${s*(flip?-1:1)} ${s})`},document.getElementById('clouds'));
+ [[-58,10,46],[0,-14,62],[60,8,48],[-20,30,46],[30,32,46]].forEach(([x,y,r])=>el('circle',{cx:x,cy:y,r,fill:'#fff'},g));
+ for(const x of[-22,22]){el('ellipse',{cx:x,cy:4,rx:10,ry:14,fill:'#1b1b2f'},g);el('circle',{cx:x+3,cy:-1,r:4,fill:'#fff'},g);}
+ for(const x of[-44,44])el('ellipse',{cx:x,cy:22,rx:12,ry:7,fill:'#ff8fb1',opacity:.8},g);
+ el('path',{d:'M-14 24 Q0 40 14 24',stroke:'#1b1b2f','stroke-width':6,fill:'none','stroke-linecap':'round'},g);}
+cloud(160,440,.95,false);cloud(640,440,.95,true);
+const sp=document.getElementById('sp');[[400,150,22],[250,215,14],[555,205,16],[120,300,12],[680,300,12],[330,120,9],[470,118,9]].forEach(([x,y,r])=>{
+ el('path',{d:`M${x} ${y-r} Q${x} ${y} ${x+r} ${y} Q${x} ${y} ${x} ${y+r} Q${x} ${y} ${x-r} ${y} Q${x} ${y} ${x} ${y-r}Z`},sp);});
+const C=['#ff3b3b','#ff8a00','#ffc400','#2fd65a','#2f8bff','#7b5bff','#ff5fa2'];
+const fill=(id,txt,off,rot)=>{const t=document.getElementById(id);[...txt].forEach((ch,i)=>{const s=el('tspan',{fill:C[(i+off)%7],dy:i%2?-8:8},t);s.textContent=ch;});};
+const bg=(id,txt)=>{const t=document.getElementById(id);[...txt].forEach((ch,i)=>{const s=el('tspan',{dy:i%2?-8:8},t);s.textContent=ch;});};
+fill('baby','Baby',6,0);fill('color','Color',0,0);
+document.fonts.ready.then(()=>{const pl=document.getElementById('plates');
+ for(const id of['baby','color']){const b=document.getElementById(id).getBBox();const pad=22;
+  el('rect',{x:b.x-pad,y:b.y-pad+14,width:b.width+pad*2,height:b.height+pad*2-20,rx:58,fill:'#000',opacity:.16,transform:'translate(0 10)'},pl);
+  el('rect',{x:b.x-pad,y:b.y-pad+14,width:b.width+pad*2,height:b.height+pad*2-20,rx:58,fill:'#fff'},pl);}
+ window.ready=true;});
+</script></body></html>
