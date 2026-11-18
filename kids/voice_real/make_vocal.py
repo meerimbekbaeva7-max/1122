@@ -2,7 +2,8 @@
 usage: python3 make_vocal.py <take.wav> <song.json> <out.wav> <seg_spec>
 seg_spec: comma list of start-end (s) in the take for each NOTE of the song, e.g. "0.70-1.80,1.85-2.55,2.65-3.80"
 Keeps the singer's timbre (WORLD spectral envelope) and natural pitch movement (30 %), snaps the note centre to the melody."""
-import sys, json, numpy as np, soundfile as sf, pyworld as pw
+import sys, os, json, numpy as np, soundfile as sf, pyworld as pw
+CLEAR = os.environ.get('CLEAR') == '1'   # 'transparent' voice: less mud, more presence/air, drier, cleaner excitation
 from scipy.signal import butter, sosfilt, stft, istft, fftconvolve
 take, songf, outf, spec = sys.argv[1:5]
 x, sr = sf.read(take); x = x.mean(1) if x.ndim > 1 else x
@@ -50,19 +51,28 @@ for (a, b), (t0, dur, n) in zip(segs, notes):
         f2 = np.where(v, target * 2 ** ((cents + scoop) / 1200), 0)
     else:
         f2 = np.zeros(m)
-    ap2 = np.where(v[:, None], np.minimum(ap2, ap2 * 0.5 + 0.01), ap2)   # a touch cleaner, still human
+    ap2 = np.where(v[:, None], np.minimum(ap2, ap2 * (0.3 if CLEAR else 0.5) + 0.01), ap2)   # cleaner, still human
     yv = pw.synthesize(f2, np.ascontiguousarray(sp2), np.ascontiguousarray(ap2), sr, FP)
     fi, fo = int(.008 * sr), int(.03 * sr); yv[:fi] *= np.linspace(0, 1, fi); yv[-fo:] *= np.cos(np.linspace(0, np.pi / 2, fo))
     i = int(t0 * sr); out[i:i + len(yv)] += yv
     print(f'{n}: take {a:.2f}-{b:.2f}s -> {t0:.2f}s ({dur:.2f}s) at {target:.0f} Hz')
 # ---- 3) studio polish ----
 v = out
-v = v - 0.2 * sosfilt(butter(2, [200, 400], 'band', fs=sr, output='sos'), v)
-v = v + 0.3 * sosfilt(butter(2, [2500, 5000], 'band', fs=sr, output='sos'), v)
-v = v + 0.15 * sosfilt(butter(2, 9000, 'high', fs=sr, output='sos'), v)
+if CLEAR:
+    v = sosfilt(butter(2, 110, 'high', fs=sr, output='sos'), v)                       # rumble off
+    v = v - 0.45 * sosfilt(butter(2, [160, 480], 'band', fs=sr, output='sos'), v)      # de-mud (boxiness)
+    v = v + 0.55 * sosfilt(butter(2, [2200, 5500], 'band', fs=sr, output='sos'), v)    # presence / diction
+    v = v + 0.45 * sosfilt(butter(2, 8000, 'high', fs=sr, output='sos'), v)            # air
+    hi = sosfilt(butter(2, 6000, 'high', fs=sr, output='sos'), v)                      # gentle de-esser
+    he = np.sqrt(np.convolve(hi ** 2, np.ones(240) / 240, 'same')); thr = np.percentile(he, 95)
+    v = v - hi * np.clip(1 - thr / (he + 1e-9), 0, .5)
+else:
+    v = v - 0.2 * sosfilt(butter(2, [200, 400], 'band', fs=sr, output='sos'), v)
+    v = v + 0.3 * sosfilt(butter(2, [2500, 5000], 'band', fs=sr, output='sos'), v)
+    v = v + 0.15 * sosfilt(butter(2, 9000, 'high', fs=sr, output='sos'), v)
 env = np.sqrt(np.convolve(v ** 2, np.ones(480) / 480, 'same')) + 1e-6
 gc = np.clip((env / np.percentile(env[env > 1e-4], 90)) ** -0.4, .5, 2.2); v = v * np.convolve(gc, np.ones(480) / 480, 'same')
 rng = np.random.default_rng(0); L = int(.5 * sr); ir = rng.standard_normal(L) * np.exp(-np.arange(L) / sr * 9); ir[:int(.01 * sr)] = 0
-wet = fftconvolve(v, ir)[:len(v)]; v = v + .07 * wet * np.std(v) / (np.std(wet) + 1e-9)
+wet = fftconvolve(v, ir)[:len(v)]; v = v + (.025 if CLEAR else .07) * wet * np.std(v) / (np.std(wet) + 1e-9)
 v = v[:int(song['duration'] * sr)]; v = np.tanh(v / (np.abs(v).max() + 1e-9) * 1.3) / np.tanh(1.3) * .9
 sf.write(outf, v.astype(np.float32), sr); print('vocal ok', outf)

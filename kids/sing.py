@@ -173,7 +173,7 @@ def polish(v):
     ir = rng.standard_normal(L) * np.exp(-tt * 6.5); ir = sosfilt(butter(1, 5000, "low", fs=SR, output="sos"), ir); ir[:int(.012 * SR)] = 0
     wet = fftconvolve(v, ir)[:len(v)]; wet *= np.std(v) / (np.std(wet) + 1e-9)
     if CLEAN:
-        return v + 0.05 * sosfilt(butter(2, [300, 6000], 'band', fs=SR, output='sos'), fftconvolve(v, ir[:int(.35 * SR)])[:len(v)] * np.std(v) / (np.std(wet) + 1e-9))
+        return v + float(os.environ.get('ROOM', 0.05)) * sosfilt(butter(2, [300, 6000], 'band', fs=SR, output='sos'), fftconvolve(v, ir[:int(.35 * SR)])[:len(v)] * np.std(v) / (np.std(wet) + 1e-9))
     return v + 0.16 * wet
 vox = polish(vox)
 if CLEAN:

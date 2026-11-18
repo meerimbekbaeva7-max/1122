@@ -42,7 +42,12 @@ crash=sosfilt(butter(2,4000,'high',fs=SR,output='sos'),rng.standard_normal(int(1
 for k,f in enumerate([1568,2093,2637,3136,4186]): add(TD+.1+k*.06,xylo(f,.6,.06))
 mus/=np.abs(mus).max()
 vox,_=sf.read('build_intro/vocals.wav');vox=np.pad(vox,(0,max(0,N-len(vox))))[:N]
-ve=np.convolve(np.abs(vox),np.ones(2400)/2400,'same');mus*=1-.4*np.clip(ve/(np.percentile(ve,99)+1e-9),0,1)
-t=np.arange(N)/SR;mix=vox*1.0+mus*.55;mix*=np.clip((DUR-t)/.25,0,1)
-d=int(.01*SR);st=np.stack([mix,vox+np.concatenate([np.zeros(d),mus[:-d]])*.55*np.clip((DUR-t)/.25,0,1)],1)
+import os
+DUCKAMT=float(os.environ.get('DUCK_AMOUNT',.4));MUS=float(os.environ.get('MUSIC_LEVEL',.55))
+ve=np.convolve(np.abs(vox),np.ones(2400)/2400,'same');mus*=1-DUCKAMT*np.clip(ve/(np.percentile(ve,99)+1e-9),0,1)
+# carve a pocket for the voice: dip the music 1.5-5 kHz while singing
+from scipy.signal import butter as _b, sosfilt as _s
+mid=_s(_b(2,[1500,5000],'band',fs=SR,output='sos'),mus);mus=mus-mid*(DUCKAMT*.8)*np.clip(ve/(np.percentile(ve,99)+1e-9),0,1)
+t=np.arange(N)/SR;mix=vox*1.0+mus*MUS;mix*=np.clip((DUR-t)/.25,0,1)
+d=int(.01*SR);st=np.stack([mix,vox+np.concatenate([np.zeros(d),mus[:-d]])*MUS*np.clip((DUR-t)/.25,0,1)],1)
 st=np.tanh(st*1.2)/np.tanh(1.2);st*=.95/np.abs(st).max();sf.write('build_intro/mix.wav',st.astype(np.float32),SR);print('intro audio ok')
