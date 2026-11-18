@@ -2,7 +2,7 @@
 const {chromium}=require("playwright");const {spawn}=require("child_process");const path=require("path");
 const [page,out,a,b]=process.argv.slice(2);const FPS=30,F0=Math.round(+a*FPS),F1=Math.round(+b*FPS);
 (async()=>{const br=await chromium.launch({args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader","--allow-file-access-from-files"]});
-const p=await br.newPage({viewport:{width:1920,height:1080}});p.on("pageerror",e=>console.log("ERR",e.message));
+const VW=+(process.env.VW||1920),VH=+(process.env.VH||1080);const p=await br.newPage({viewport:{width:VW,height:VH}});p.on("pageerror",e=>console.log("ERR",e.message));
 p.setDefaultTimeout(180000);await p.goto("file://"+path.resolve(page));await p.waitForFunction(()=>window.sceneReady,{timeout:60000});await p.evaluate(()=>document.fonts.ready);
 for(let f=Math.max(0,F0-30);f<F0;f++)await p.evaluate(t=>renderAt(t),f/FPS);
 const ff=spawn("ffmpeg",["-y","-loglevel","error","-f","image2pipe","-framerate","30","-c:v","mjpeg","-i","-","-c:v","libx264","-preset","medium","-crf","17","-pix_fmt","yuv420p",out],{stdio:["pipe","inherit","inherit"]});
