@@ -1,0 +1,85 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1920px;height:1080px;overflow:hidden;font-family:Fredoka,sans-serif;background:#5fd0ff}
+#gl{position:absolute;inset:0}
+#logo{position:absolute;left:50%;top:600px;transform:translate(-50%,-50%);text-align:center}
+.plate{display:inline-block;background:#fff;border-radius:70px;padding:18px 64px 30px;box-shadow:0 16px 0 rgba(0,0,0,.14)}
+.l1,.l2{font-weight:700;line-height:1.05;white-space:nowrap}.l1{font-size:150px}.l2{font-size:190px;margin-top:-10px}
+.ch{display:inline-block}
+.flash{position:absolute;inset:0;background:#fff;opacity:0}
+</style></head><body>
+<canvas id="gl" width="1920" height="1080"></canvas>
+<div id="logo"><div class="plate" id="plate"><div class="l1" id="l1"></div><div class="l2" id="l2"></div></div></div>
+<div class="flash" id="flash"></div>
+<script src="build_intro/data.js"></script>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';import {makeTiko} from './tiko/tiko.js';import {makeLulu} from './lulu/lulu.js';
+const S=window.SONG,B=S.beat,T0=S.intro,TD=T0+5*B;
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),prog=(t,a,b)=>clamp((t-a)/(b-a)),eo=x=>1-Math.pow(1-x,3),eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,back=x=>{const c=2.4;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,x)=>a+(b-a)*x;
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+const RC=['#ff2a2a','#ff8a00','#ffc400','#2fd65a','#2f8bff','#7b5bff'],TC=['#ff3b3b','#ff8a00','#ffc400','#2fd65a','#2f8bff','#7b5bff','#ff5fa2'];
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,preserveDrawingBuffer:true});r.setPixelRatio(1);r.setSize(1920,1080,false);
+r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.12;
+const scene=new THREE.Scene();const cam=new THREE.PerspectiveCamera(40,1920/1080,.1,200);
+const ctex=(w,h,fn)=>{const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;};
+scene.background=ctex(2,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#2fb8ff');gr.addColorStop(.65,'#9fe4ff');gr.addColorStop(1,'#e6f9ff');g.fillStyle=gr;g.fillRect(0,0,w,h);});
+const burst=new THREE.Mesh(new THREE.PlaneGeometry(70,70),new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,opacity:.55,map:ctex(1024,1024,(g)=>{g.translate(512,512);for(let i=0;i<28;i++){g.fillStyle=i%2?'rgba(255,255,255,.6)':'rgba(255,255,255,0)';g.beginPath();g.moveTo(0,0);g.arc(0,0,512,i/28*Math.PI*2,(i+1)/28*Math.PI*2);g.fill();}})}));burst.position.set(0,1,-14);scene.add(burst);
+scene.add(new THREE.HemisphereLight('#ffffff','#9be38a',1.5));const sl=new THREE.DirectionalLight('#fff',2.2);sl.position.set(4,8,10);scene.add(sl);scene.add(new THREE.AmbientLight('#fff',.4));
+const hill=new THREE.Mesh(new THREE.SphereGeometry(60,96,48),new THREE.MeshStandardMaterial({color:'#5fdc4f',roughness:.85}));hill.position.set(0,-62.6,0);scene.add(hill);
+for(const [x,z,rr] of[[-18,-20,16],[19,-22,17]]){const h=new THREE.Mesh(new THREE.SphereGeometry(rr,48,24),new THREE.MeshStandardMaterial({color:'#8ff07a',roughness:.9}));h.position.set(x,-rr+1.5,z);scene.add(h);}
+const pc=['#ff5fa2','#ffd23f','#ffffff','#ff7b3a','#b07bff'];const flowers=[];
+for(let i=0;i<26;i++){const f=new THREE.Group();const x=(rnd(i)-.5)*22,z=1.5+rnd(i+9)*3;const st=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.5),new THREE.MeshStandardMaterial({color:'#2f9e44'}));st.position.y=.25;f.add(st);
+ for(let k=0;k<5;k++){const p=new THREE.Mesh(new THREE.SphereGeometry(.12,12,8),new THREE.MeshStandardMaterial({color:pc[i%5]}));const a=k/5*Math.PI*2;p.position.set(Math.cos(a)*.14,.55+Math.sin(a)*.14,0);p.scale.z=.4;f.add(p);}
+ f.position.set(x,-2.6-(x*x)/120,z);scene.add(f);flowers.push(f);}
+// rainbow: six tubes along a half circle, drawn progressively
+const rainbow=RC.map((c,i)=>{const R=6.3-i*.5;const pts=[];for(let k=0;k<=96;k++){const a=Math.PI-k/96*Math.PI;pts.push(new THREE.Vector3(Math.cos(a)*R,Math.sin(a)*R-1.6,-3));}
+ const geo=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),96,.27,16,false);const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:c,roughness:.3}));scene.add(m);return m;});
+// fluffy clouds at the rainbow feet
+function cloud(x,y,s){const g=new THREE.Group();const mt=new THREE.MeshStandardMaterial({color:'#fff',roughness:.6});[[-.9,0,.7],[0,.35,.95],[.9,0,.75],[-.4,-.3,.7],[.45,-.3,.7]].forEach(([a,b,rr])=>{const sp=new THREE.Mesh(new THREE.SphereGeometry(rr,32,20),mt);sp.position.set(a,b,0);g.add(sp);});
+ g.position.set(x,y,-2.5);g.scale.setScalar(s);scene.add(g);return g;}
+const cl=[cloud(-6.0,-1.5,1.2),cloud(6.0,-1.5,1.2)];
+const T=makeTiko(THREE);scene.add(T.g);const Lu=makeLulu(THREE);scene.add(Lu.g);
+const sh=new THREE.Mesh(new THREE.CircleGeometry(1.4,40),new THREE.MeshBasicMaterial({color:'#1f5a2a',transparent:true,opacity:.2}));sh.rotation.x=-Math.PI/2;scene.add(sh);
+const CN=320;const conf=new THREE.InstancedMesh(new THREE.PlaneGeometry(.2,.32),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}),CN);for(let i=0;i<CN;i++)conf.setColorAt(i,new THREE.Color(TC[i%7]));conf.frustumCulled=false;scene.add(conf);const dm=new THREE.Object3D();
+const SPN=40;const spark=new THREE.InstancedMesh(new THREE.OctahedronGeometry(.14),new THREE.MeshBasicMaterial({color:'#fff'}),SPN);spark.frustumCulled=false;scene.add(spark);
+// logo letters
+const $=id=>document.getElementById(id);
+$('l1').innerHTML=[...'Rainbow'].map((c,i)=>`<span class="ch" style="color:${TC[i%7]}">${c}</span>`).join('');
+$('l2').innerHTML=[...'Tots'].map((c,i)=>`<span class="ch" style="color:${['#2fd65a','#2f8bff','#7b5bff','#ff5fa2'][i]}">${c}</span>`).join('');
+const L1=[...$('l1').children],L2=[...$('l2').children];
+const W1=S.lines[0].words[0].t0,W2=S.lines[0].words[1].t0;
+window.renderAt=function(t){
+ burst.rotation.z=-t*.35;flowers.forEach((f,i)=>f.rotation.z=Math.sin(t*3+i)*.15);
+ // rainbow draws left->right, each band slightly staggered
+ rainbow.forEach((m,i)=>{const k=eio(prog(t,.02+i*.04,.62+i*.04));const idx=m.geometry.index.count;m.geometry.setDrawRange(0,Math.floor(idx*k/6)*6);});
+ cl.forEach((c,i)=>{const p=back(prog(t,.1+i*.15,.5+i*.15));c.scale.setScalar(1.2*Math.max(p,.001));c.position.y=-1.5+Math.sin(t*2+i)*.06;});
+ // Lulu flies in from the right, top
+ const lp=eo(prog(t,.45,1.05));Lu.g.position.set(lerp(13,6.2,lp),1.8+Math.sin(t*2.4)*.15+(1-lp)*1.5,0);Lu.g.scale.setScalar(1.15);Lu.g.rotation.y=-.3+Math.sin(t*1.5)*.2;
+ Lu.drops.visible=t>.7;Lu.setDrops(t);Lu.mouth.scale.y=.25+(t>W1&&t<TD+.6?.5+.4*Math.sin(t*14):.1);Lu.eyes.forEach(e=>e.scale.y=((t+.4)%2.4)<.1?.1:1);
+ Lu.arms.forEach((a,i)=>a.position.y=1.05+Math.abs(Math.sin(t*7+i))*.3);
+ // Tiko jumps up from below, left
+ const tp=prog(t,.85,1.45);let ty=tp<1?lerp(-4,0,eo(tp))+Math.sin(Math.PI*tp)*1.6:0;
+ const td=prog(t,TD,TD+.5);ty+=Math.sin(Math.PI*td)*1.1+ (t>T0&&t<TD?Math.abs(Math.sin(Math.PI*(t-T0)/B))*.25:0);
+ T.g.position.set(-5.9,-2.6+ty,1.2);T.g.scale.setScalar(1.3);T.g.rotation.y=.45+Math.sin(t*2)*.12;
+ const sq=1+(.12*(1-Math.abs(Math.sin(Math.PI*t/B)))**2-.04);T.body.scale.set(1/Math.sqrt(sq),sq,1/Math.sqrt(sq));
+ T.mouth.scale.y=.25+(t>.95&&t<1.4?1.1:(t>W1&&t<TD+.6?.5+.4*Math.sin(t*13+1):.05));T.eyes.forEach(e=>e.scale.y=((t+1.1)%2.7)<.1?.1:1);
+ T.arms.forEach((a,i)=>a.rotation.z=(i?-1:1)*-1.2*Math.abs(Math.sin(t*6+i)));T.tail.rotation.y=Math.sin(t*8)*.3;
+ sh.position.set(-5.9,-2.58,1.2);sh.scale.setScalar(Math.max(.001,1-Math.min(1,Math.max(0,ty))*.4));sh.visible=t>.9;
+ // confetti + sparkles on the ta-da
+ for(let i=0;i<CN;i++){const age=t-TD+.15;const p=new THREE.Vector3((rnd(i)-.5)*22,6.2+rnd(i+1)*3.5-age*(4+rnd(i+2)*4),(rnd(i+4)-.5)*4+1);p.x+=Math.sin(t*3+i)*.3;dm.position.copy(p);dm.rotation.set(t*5*rnd(i+3),t*4,t*3);dm.scale.setScalar(age>0?1:.0001);dm.updateMatrix();conf.setMatrixAt(i,dm.matrix);}
+ conf.instanceMatrix.needsUpdate=true;
+ for(let i=0;i<SPN;i++){const a=rnd(i)*Math.PI*2,rad=4+rnd(i+5)*4;const tw=Math.max(0,Math.sin(t*6+i*1.7));dm.position.set(Math.cos(a)*rad*1.3,Math.sin(a)*rad*.55+2,-1);dm.rotation.set(t*3,t*2,0);dm.scale.setScalar(t>T0?tw*1.3+.001:.001);dm.updateMatrix();spark.setMatrixAt(i,dm.matrix);}
+ spark.instanceMatrix.needsUpdate=true;
+ // camera: start close on the rainbow, pull back; tiny push on the ta-da
+ const cz=lerp(12,17,eo(prog(t,0,1.6)))-Math.sin(Math.PI*prog(t,TD,TD+.6))*.6;cam.position.set(Math.sin(t*.8)*.4,1.2,cz);cam.lookAt(0,1.1,0);
+ if(t>TD&&t<TD+.35){const k=1-prog(t,TD,TD+.35);cam.position.x+=Math.sin(t*80)*.08*k;cam.position.y+=Math.cos(t*70)*.08*k;}
+ r.render(scene,cam);
+ // logo
+ const pl=back(prog(t,W1-.25,W1+.1));$('plate').style.transform=`scale(${Math.max(.001,pl*(1+.05*Math.sin(Math.PI*prog(t,TD,TD+.4))))}) rotate(${Math.sin(t*2.5)*1.2}deg)`;
+ L1.forEach((s,i)=>{const a=W1+i*.07,p=back(prog(t,a,a+.3));s.style.transform=`translateY(${(1-clamp(p))*-120+(t>TD?Math.sin(t*9+i)*6:0)}px) scale(${Math.max(.001,p)})`;});
+ L2.forEach((s,i)=>{const a=W2+i*.09,p=back(prog(t,a,a+.32));s.style.transform=`translateY(${(1-clamp(p))*-160+(t>TD?Math.sin(t*9+i+3)*8:0)}px) scale(${Math.max(.001,p)})`;});
+ $('flash').style.opacity=t>=TD&&t<TD+.3?.55*(1-prog(t,TD,TD+.3)):0;
+};
+window.sceneReady=true;
+</script></body></html>
