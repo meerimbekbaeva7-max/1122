@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;width:1080px;height:1080px;overflow:hidden;background:#000}canvas{display:block}
+</style></head><body><canvas id="c" width="1080" height="1080"></canvas>
+<script>
+const W=1080,H=1080,LOOP=4,c=document.getElementById('c'),g=c.getContext('2d');
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+const load=src=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=src;});
+const off=document.createElement('canvas');off.width=W;off.height=H;const o=off.getContext('2d');
+let photo,mask,logo,bill;
+// stylised banknote (generic, not a real currency design)
+function makeBill(){const b=document.createElement('canvas');b.width=360;b.height=160;const x=b.getContext('2d');
+ const gr=x.createLinearGradient(0,0,360,160);gr.addColorStop(0,'#f4d6d3');gr.addColorStop(.5,'#e9b9b8');gr.addColorStop(1,'#d79a9f');x.fillStyle=gr;x.fillRect(0,0,360,160);
+ x.strokeStyle='#7a2a36';x.lineWidth=5;x.strokeRect(8,8,344,144);x.lineWidth=1.5;x.strokeRect(16,16,328,128);
+ for(let i=0;i<40;i++){x.strokeStyle='rgba(122,42,54,.18)';x.beginPath();x.arc(180,80,10+i*3,0,Math.PI*2);x.stroke();}
+ x.fillStyle='#f6dcd9';x.beginPath();x.ellipse(180,80,46,56,0,0,Math.PI*2);x.fill();x.strokeStyle='#7a2a36';x.lineWidth=3;x.stroke();
+ x.fillStyle='#7a2a36';x.font='bold 62px Inter Display, Inter, sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('$',180,84);
+ x.font='bold 34px Inter Display, Inter, sans-serif';x.fillText('100',52,42);x.fillText('100',308,118);x.font='bold 15px Inter, sans-serif';x.fillText('ONE HUNDRED',270,40);x.fillText('DOLLARS',90,122);
+ return b;}
+// bills behind the couple and a few in front (blurred = depth)
+const LANES=[70,1010,150,930];const BILLS=[];for(let i=0;i<22;i++){const front=i>=18;BILLS.push({x:front?LANES[i-18]:rnd(i)*W,ph:rnd(i+3),k:front?1:(1+(i%2)),sz:front?.7+rnd(i+5)*.2:.35+rnd(i+7)*.4,sw:front?25:40+rnd(i+9)*90,
+ spin:(rnd(i+11)>.5?1:-1)*(1+(i%3)),flip:1+(i%2),blur:front?7:(rnd(i+13)<.3?3:0),front});}
+function heart(x,y,s,rot,blur,a){g.save();g.translate(x,y);g.rotate(rot);g.globalAlpha=a;if(blur)g.filter=`blur(${blur}px)`;
+ const gr=g.createLinearGradient(-s,-s,s,s);gr.addColorStop(0,'#ffb3c1');gr.addColorStop(.45,'#ff3d63');gr.addColorStop(1,'#8a0f2a');g.fillStyle=gr;
+ g.beginPath();g.moveTo(0,.35*s);g.bezierCurveTo(-.9*s,-.25*s,-.45*s,-1*s,0,-.45*s);g.bezierCurveTo(.45*s,-1*s,.9*s,-.25*s,0,.35*s);g.fill();
+ g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=s*.08;g.lineCap='round';g.beginPath();g.moveTo(-.45*s,-.55*s);g.bezierCurveTo(-.6*s,-.3*s,-.5*s,-.05*s,-.3*s,.05*s);g.stroke();g.restore();}
+function drawBill(ctx,b,t){const p=((t/LOOP)*b.k+b.ph)%1;const y=-180+p*(H+360);const x=b.x+Math.sin(2*Math.PI*(t/LOOP*b.k+b.ph))*b.sw;
+ const rot=Math.sin(2*Math.PI*(t/LOOP)*b.spin+b.ph*6)*.9+b.ph*3;const fl=Math.cos(2*Math.PI*(t/LOOP)*b.flip*b.k+b.ph*5);
+ ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(b.sz*(.25+.75*Math.abs(fl)),b.sz);if(b.blur)ctx.filter=`blur(${b.blur}px)`;
+ ctx.globalAlpha=b.front?.85:.95;ctx.drawImage(bill,-180,-80);if(fl<0){ctx.globalAlpha=.25;ctx.fillStyle='#5a0f1f';ctx.fillRect(-180,-80,360,160);}ctx.restore();}
+window.renderAt=function(t){const w=2*Math.PI*t/LOOP;
+ g.filter='none';g.globalAlpha=1;g.drawImage(photo,0,0,W,H);
+ // ---- background layer (only visible around the people) ----
+ o.clearRect(0,0,W,H);o.globalCompositeOperation='source-over';o.filter='none';
+ const glow=.75+.25*Math.sin(w*2);o.save();o.globalAlpha=.7*glow;o.filter='blur(2px)';
+ const lg=o.createLinearGradient(0,240,0,800);lg.addColorStop(0,'#ffd9df');lg.addColorStop(.6,'#e7a2ad');lg.addColorStop(1,'rgba(138,42,58,.2)');o.fillStyle=lg;
+ o.font='900 760px Inter Display, Inter, sans-serif';o.textAlign='center';o.fillText('BK',540,800);o.restore();
+ o.save();o.globalAlpha=.25*glow;o.filter='blur(30px)';o.fillStyle='#ff4d6d';o.font='900 760px Inter Display, Inter, sans-serif';o.textAlign='center';o.fillText('BK',540,800);o.restore();
+ BILLS.filter(b=>!b.front).forEach(b=>drawBill(o,b,t));
+ o.globalCompositeOperation='destination-in';o.filter='none';o.drawImage(mask,0,0,W,H);
+ g.drawImage(off,0,0);
+ // light flicker between the faces
+ g.save();g.globalCompositeOperation='screen';const rg=g.createRadialGradient(500,470,0,500,470,300);rg.addColorStop(0,`rgba(255,120,160,${.18+.1*Math.sin(w*3)})`);rg.addColorStop(1,'rgba(255,120,160,0)');g.fillStyle=rg;g.fillRect(0,0,W,H);g.restore();
+ // front bills (blurred, out of focus)
+ BILLS.filter(b=>b.front).forEach(b=>drawBill(g,b,t));
+ // hearts bobbing
+ heart(150,300+Math.sin(w)*14,120,-.38+Math.sin(w)*.06,0,1);heart(935,270+Math.sin(w+1.5)*14,105,.35+Math.sin(w+1)*.06,0,1);
+ heart(95,640+Math.sin(w+2)*10,62,.26,4,.9);heart(985,620+Math.sin(w+3)*10,70,-.28,4,.9);
+ // logo with pulsing glow
+ g.save();g.filter='blur(10px)';g.globalAlpha=.55+.2*Math.sin(w*2);g.strokeStyle='#ff5fa0';g.lineWidth=10;g.beginPath();g.arc(540,842,152,0,Math.PI*2);g.stroke();g.restore();
+ g.save();g.beginPath();g.arc(540,842,145,0,Math.PI*2);g.clip();g.drawImage(logo,395,697,290,290);g.restore();
+ // vignette + grain
+ const vg=g.createRadialGradient(540,520,380,540,520,780);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.75)');g.fillStyle=vg;g.fillRect(0,0,W,H);
+ const id=g.getImageData(0,0,W,H),d=id.data;let sd=(Math.floor(t*15)%60)*7919+7;for(let i=0;i<d.length;i+=16){sd=(sd*16807)%2147483647;const v=(sd%21)-10;for(let j=0;j<16&&i+j<d.length;j+=4){d[i+j]+=v;d[i+j+1]+=v;d[i+j+2]+=v;}}g.putImageData(id,0,0);};
+Promise.all([load('gen/photo_1080.png'),load('gen/bgmask_alpha.png'),load('logo_round.png'),document.fonts.ready]).then(([a,b,l])=>{photo=a;mask=b;logo=l;bill=makeBill();renderAt(0);window.ready=true;});
+</script></body></html>
