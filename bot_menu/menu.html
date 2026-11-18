@@ -1,0 +1,61 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(../kids/node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+html,body{margin:0;width:1280px;height:720px;overflow:hidden;background:#07040a}
+svg{display:block}
+</style></head><body>
+<svg width="1280" height="720" viewBox="0 0 1280 720">
+<defs>
+ <radialGradient id="bg" cx="50%" cy="48%" r="70%"><stop offset="0" stop-color="#2a1530"/><stop offset=".55" stop-color="#120914"/><stop offset="1" stop-color="#050307"/></radialGradient>
+ <pattern id="dia" width="56" height="56" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+  <rect width="56" height="56" fill="none"/><path d="M0 0H56M0 0V56" stroke="#c99a4a" stroke-opacity=".35" stroke-width="1.6"/>
+  <circle cx="0" cy="0" r="2.2" fill="#ffd27a" fill-opacity=".55"/></pattern>
+ <radialGradient id="fade" cx="50%" cy="50%" r="60%"><stop offset=".25" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+ <mask id="m"><rect width="1280" height="720" fill="url(#fade)"/></mask>
+ <filter id="neon" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7" result="b1"/><feGaussianBlur stdDeviation="18" result="b2"/>
+  <feMerge><feMergeNode in="b2"/><feMergeNode in="b1"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="soft"><feGaussianBlur stdDeviation="40"/></filter>
+ <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0d1d"/><stop offset="1" stop-color="#0a050c"/></linearGradient>
+</defs>
+<rect width="1280" height="720" fill="url(#bg)"/>
+<rect width="1280" height="720" fill="url(#dia)" mask="url(#m)"/>
+<!-- pink glow pools behind the figures -->
+<ellipse cx="300" cy="420" rx="260" ry="300" fill="#ff3fd2" opacity=".22" filter="url(#soft)"/>
+<ellipse cx="980" cy="420" rx="260" ry="300" fill="#ff3fd2" opacity=".22" filter="url(#soft)"/>
+<ellipse cx="640" cy="360" rx="330" ry="240" fill="#ffb347" opacity=".10" filter="url(#soft)"/>
+<!-- MAN, left, profile facing right (head, neck, shoulders/chest) -->
+<g id="man" transform="translate(-150 10) scale(1.0)">
+ <path id="manP" d="M150 720 L150 600 C150 545 190 520 245 505 L300 488 C318 482 326 470 326 452 L326 430
+   C315 428 306 420 304 408 L300 392 C292 388 288 380 290 372 C292 364 298 360 304 360
+   C300 330 304 300 322 278 C342 254 372 244 404 248 C438 252 462 272 470 300
+   C476 320 476 338 474 352 L486 372 C490 378 488 384 482 386 L476 388 L478 402 C479 408 476 412 471 413 L474 424
+   C475 432 470 438 462 440 L440 444 C432 446 428 452 428 462 L428 480 C428 496 440 506 462 512
+   L520 528 C560 540 584 566 584 610 L584 720 Z" fill="url(#body)"/>
+ <use href="#manP" fill="none" stroke="#ff4fd8" stroke-width="4" filter="url(#neon)"/>
+</g>
+<!-- WOMAN, right, profile facing left, long hair -->
+<g id="woman" transform="translate(110 10)">
+ <path id="womP" d="M1130 720 L1130 610 C1130 566 1104 540 1062 530 L1014 518 C994 512 984 500 984 484 L986 462
+   C990 448 984 440 972 438 L956 436 C948 434 944 428 946 420 L948 410 C942 408 940 402 943 396 L948 388
+   C940 384 938 378 942 370 L954 352 C950 336 950 318 956 300 C966 270 992 250 1026 246
+   C1066 242 1098 262 1112 296 C1128 334 1124 378 1132 420 C1140 466 1160 500 1178 534
+   C1190 558 1194 590 1190 620 L1190 720 Z" fill="url(#body)"/>
+ <use href="#womP" fill="none" stroke="#ff4fd8" stroke-width="4" filter="url(#neon)"/>
+ <!-- loose hair strands -->
+ <path d="M1120 330 C1140 390 1150 440 1176 500" fill="none" stroke="#ff9be9" stroke-width="2" opacity=".6" filter="url(#neon)"/>
+</g>
+<!-- sparkles -->
+<g fill="#fff3c4" id="sp"></g>
+<!-- logo -->
+<circle cx="640" cy="330" r="214" fill="#000" opacity=".55" filter="url(#soft)"/>
+<image href="logo_round.png" x="440" y="130" width="400" height="400"/>
+<!-- tagline -->
+<text x="640" y="610" text-anchor="middle" font-family="Inter Display, Inter, sans-serif" font-weight="800" font-size="46" fill="#ffd27a" letter-spacing="12" filter="url(#neon)" opacity=".95">WELCOME</text>
+<text x="640" y="655" text-anchor="middle" font-family="Inter Display, Inter, sans-serif" font-weight="700" font-size="22" fill="#f5c6ee" letter-spacing="8" opacity=".85">ГЛАВНОЕ МЕНЮ</text>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg',sp=document.getElementById('sp');
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+for(let i=0;i<34;i++){const x=40+rnd(i)*1200,y=30+rnd(i+7)*660,r=2+rnd(i+3)*7;if(Math.abs(x-640)<230&&Math.abs(y-330)<230)continue;
+ const p=document.createElementNS(NS,'path');p.setAttribute('d',`M${x} ${y-r} Q${x} ${y} ${x+r} ${y} Q${x} ${y} ${x} ${y+r} Q${x} ${y} ${x-r} ${y} Q${x} ${y} ${x} ${y-r}Z`);p.setAttribute('opacity',.4+rnd(i+11)*.6);sp.appendChild(p);}
+document.fonts.ready.then(()=>{const img=document.querySelector('image');(img.complete===false?new Promise(r=>img.addEventListener('load',r)):Promise.resolve()).then(()=>window.ready=true);setTimeout(()=>window.ready=true,1500);});
+</script></body></html>
