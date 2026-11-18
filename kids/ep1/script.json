@@ -1,0 +1,188 @@
+{
+ "title": "Tiko's Lost Colors",
+ "events": [
+  {
+   "type": "walk",
+   "to": 0.0,
+   "from": -9,
+   "dur": 3.0,
+   "who": "tiko"
+  },
+  {
+   "type": "say",
+   "who": "tiko",
+   "text": "Good morning! I'm Tiko! Rawr!",
+   "act": "wave",
+   "speak": "Good morning! I am Tiko! Rawr!"
+  },
+  {
+   "type": "arrive",
+   "who": "lulu",
+   "dur": 1.6
+  },
+  {
+   "type": "say",
+   "who": "lulu",
+   "text": "Good morning, Tiko! Look at my rainbow!",
+   "act": "rain"
+  },
+  {
+   "type": "say",
+   "who": "tiko",
+   "text": "Oh no! My spikes! Where are my colors?",
+   "act": "turn"
+  },
+  {
+   "type": "say",
+   "who": "lulu",
+   "text": "Don't worry, Tiko! Let's find them together!"
+  },
+  {
+   "type": "say",
+   "who": "tiko",
+   "text": "Kids, will you help us? Let's go!",
+   "act": "camera"
+  },
+  {
+   "type": "walk",
+   "to": 8,
+   "dur": 3.4
+  },
+  {
+   "type": "ask",
+   "who": "lulu",
+   "text": "Kids, where is something red?",
+   "target": "apple",
+   "pause": 2.6
+  },
+  {
+   "type": "answer",
+   "who": "tiko",
+   "text": "There! The apple! Red!",
+   "spike": 0,
+   "word": "RED!"
+  },
+  {
+   "type": "walk",
+   "to": 16,
+   "dur": 3.2
+  },
+  {
+   "type": "ask",
+   "who": "tiko",
+   "text": "Kids, where is something orange?",
+   "target": "orange",
+   "pause": 2.6
+  },
+  {
+   "type": "answer",
+   "who": "lulu",
+   "text": "The orange! Orange!",
+   "spike": 1,
+   "word": "ORANGE!"
+  },
+  {
+   "type": "ask",
+   "who": "lulu",
+   "text": "Kids, what is yellow? Look up!",
+   "target": "sun",
+   "pause": 2.6
+  },
+  {
+   "type": "answer",
+   "who": "tiko",
+   "text": "The sun! Yellow!",
+   "spike": 2,
+   "word": "YELLOW!"
+  },
+  {
+   "type": "walk",
+   "to": 26,
+   "dur": 3.4
+  },
+  {
+   "type": "ask",
+   "who": "tiko",
+   "text": "Kids, where is something green?",
+   "target": "frog",
+   "pause": 2.6
+  },
+  {
+   "type": "answer",
+   "who": "lulu",
+   "text": "The frog! Green!",
+   "spike": 3,
+   "word": "GREEN!"
+  },
+  {
+   "type": "walk",
+   "to": 32,
+   "dur": 2.6
+  },
+  {
+   "type": "ask",
+   "who": "lulu",
+   "text": "Kids, where is something blue?",
+   "target": "water",
+   "pause": 2.6
+  },
+  {
+   "type": "answer",
+   "who": "tiko",
+   "text": "The water! Blue!",
+   "spike": 4,
+   "word": "BLUE!"
+  },
+  {
+   "type": "walk",
+   "to": 38,
+   "dur": 2.6
+  },
+  {
+   "type": "ask",
+   "who": "tiko",
+   "text": "Kids, can you find purple?",
+   "target": "flower",
+   "pause": 2.6
+  },
+  {
+   "type": "answer",
+   "who": "lulu",
+   "text": "The flower! Purple!",
+   "spike": 5,
+   "word": "PURPLE!"
+  },
+  {
+   "type": "say",
+   "who": "tiko",
+   "text": "My colors are back! Rainbow spikes! Rawr!",
+   "act": "rainbow"
+  },
+  {
+   "type": "song",
+   "lines": [
+    "Red, orange, yellow, green!",
+    "Blue and purple, can you see?",
+    "Rainbow, rainbow, shining bright!",
+    "Tiko's spikes are full of light!"
+   ],
+   "repeat": 2
+  },
+  {
+   "type": "say",
+   "who": "tiko",
+   "text": "Thank you, kids! You found my colors!",
+   "act": "camera"
+  },
+  {
+   "type": "say",
+   "who": "lulu",
+   "text": "See you next time! Bye-bye!",
+   "act": "wave"
+  },
+  {
+   "type": "outro",
+   "dur": 4.0
+  }
+ ]
+}

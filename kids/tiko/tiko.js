@@ -38,8 +38,10 @@ export function makeTiko(THREE, color = '#2fc7c0') {
   // tiny arms, feet, tail
   const arms = [];
   for (const sx of [-1, 1]) { const a = new THREE.Group(); a.position.set(sx * .85, 1.25, .35); const arm = new THREE.Mesh(new THREE.CapsuleGeometry(.13, .28, 8, 16), skin); arm.rotation.z = sx * 1.0; arm.position.set(sx * .12, -.05, 0); a.add(arm); body.add(a); arms.push(a); }
-  for (const sx of [-1, 1]) { const f = new THREE.Mesh(new THREE.SphereGeometry(.3, 24, 16), skinD); f.scale.set(1, .55, 1.35); f.position.set(sx * .45, .14, .2); body.add(f);
-    for (const t of [-1, 0, 1]) { const c = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 8), cream); c.position.set(sx * .45 + t * .12, .12, .6); body.add(c); } }
+  const feet = [];   // each foot is a group so it can step (walk cycle)
+  for (const sx of [-1, 1]) { const fg = new THREE.Group(); fg.position.set(sx * .45, 0, .2); body.add(fg); feet.push(fg);
+    const f = new THREE.Mesh(new THREE.SphereGeometry(.3, 24, 16), skinD); f.scale.set(1, .55, 1.35); f.position.set(0, .14, 0); fg.add(f);
+    for (const t of [-1, 0, 1]) { const c = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 8), cream); c.position.set(t * .12, .12, .4); fg.add(c); } }
   const tailPts = [new THREE.Vector3(0, .42, -.62), new THREE.Vector3(.3, .25, -1.15), new THREE.Vector3(.8, .22, -1.45), new THREE.Vector3(1.25, .35, -1.55)];
   const tc = new THREE.CatmullRomCurve3(tailPts); const tgeo = new THREE.TubeGeometry(tc, 60, .32, 20, false);
   const pos = tgeo.attributes.position, uv = tgeo.attributes.uv;
@@ -47,5 +49,11 @@ export function makeTiko(THREE, color = '#2fc7c0') {
   tgeo.computeVertexNormals();
   const tail = new THREE.Mesh(tgeo, skin); body.add(tail);
   const tip = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 8), skin); tip.position.copy(tailPts[3]); body.add(tip);
-  return { g, body, mouth, eyes, arms, tail, spikes };
+  // walk(phase, amount): step cycle — feet lift and swing, body bobs and sways
+  const walk = (ph, k = 1) => {
+    feet.forEach((f, i) => { const s = Math.sin(ph + i * Math.PI); f.position.z = .2 + s * .32 * k; f.position.y = Math.max(0, Math.cos(ph + i * Math.PI)) * .22 * k; f.rotation.x = -s * .35 * k; });
+    body.position.y = Math.abs(Math.sin(ph)) * .12 * k; body.rotation.z = Math.sin(ph) * .06 * k;
+    arms.forEach((a, i) => a.rotation.x = Math.sin(ph + (i ? 0 : Math.PI)) * .6 * k);
+  };
+  return { g, body, mouth, eyes, arms, tail, spikes, feet, walk };
 }

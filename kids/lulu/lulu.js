@@ -32,6 +32,9 @@ export function makeLulu(THREE) {
   // little puff arms
   const arms = [];
   for (const sx of [-1, 1]) { const a = new THREE.Group(); a.position.set(sx * 1.35, 1.05, .35); const h = new THREE.Mesh(new THREE.SphereGeometry(.3, 24, 16), fluff); h.position.set(sx * .15, 0, 0); a.add(h); body.add(a); arms.push(a); }
+  // two little puff feet so Lulu can toddle along the path
+  const feet = [];
+  for (const sx of [-1, 1]) { const fg = new THREE.Group(); fg.position.set(sx * .45, .12, .25); const f = new THREE.Mesh(new THREE.SphereGeometry(.24, 24, 16), shade); f.scale.set(1, .7, 1.2); fg.add(f); body.add(fg); feet.push(fg); }
   // colourful raindrops (shown when happy)
   const drops = new THREE.Group(); body.add(drops);
   ['#ff2a2a', '#ff8a00', '#ffc400', '#2fd65a', '#2f8bff', '#7b5bff', '#ff5fa2'].forEach((c, i) => {
@@ -40,5 +43,10 @@ export function makeLulu(THREE) {
     d.userData = { x: -1 + i * .33, ph: i / 7 }; drops.add(d); });
   const setDrops = t => drops.children.forEach(d => { const q = (t * .9 + d.userData.ph) % 1; d.position.set(d.userData.x, .2 - q * 1.6, .5); d.scale.setScalar(1 - q * .5); });
   setDrops(0);
-  return { g, body, mouth, eyes, arms, bow, drops, setDrops };
+  const walk = (ph, k = 1) => {
+    feet.forEach((f, i) => { const s = Math.sin(ph + i * Math.PI); f.position.z = .25 + s * .28 * k; f.position.y = .12 + Math.max(0, Math.cos(ph + i * Math.PI)) * .2 * k; });
+    body.position.y = Math.abs(Math.sin(ph)) * .14 * k; body.rotation.z = Math.sin(ph) * .08 * k;
+    arms.forEach((a, i) => a.position.y = 1.05 + Math.sin(ph + i * Math.PI) * .12 * k);
+  };
+  return { g, body, mouth, eyes, arms, bow, drops, setDrops, feet, walk };
 }

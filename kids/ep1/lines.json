@@ -1,0 +1,218 @@
+[
+ {
+  "event": 1,
+  "part": 0,
+  "who": "tiko",
+  "text": "Good morning! I'm Tiko! Rawr!",
+  "file": "01_0.wav",
+  "dur": 2.496,
+  "clarity": 1.0
+ },
+ {
+  "event": 3,
+  "part": 0,
+  "who": "lulu",
+  "text": "Good morning, Tiko! Look at my rainbow!",
+  "file": "03_0.wav",
+  "dur": 2.425,
+  "clarity": 1.0
+ },
+ {
+  "event": 4,
+  "part": 0,
+  "who": "tiko",
+  "text": "Oh no! My spikes! Where are my colors?",
+  "file": "04_0.wav",
+  "dur": 3.217,
+  "clarity": 1.0
+ },
+ {
+  "event": 5,
+  "part": 0,
+  "who": "lulu",
+  "text": "Don't worry, Tiko! Let's find them together!",
+  "file": "05_0.wav",
+  "dur": 2.533,
+  "clarity": 1.0
+ },
+ {
+  "event": 6,
+  "part": 0,
+  "who": "tiko",
+  "text": "Kids, will you help us? Let's go!",
+  "file": "06_0.wav",
+  "dur": 2.434,
+  "clarity": 1.0
+ },
+ {
+  "event": 8,
+  "part": 0,
+  "who": "lulu",
+  "text": "Kids, where is something red?",
+  "file": "08_0.wav",
+  "dur": 1.521,
+  "clarity": 1.0
+ },
+ {
+  "event": 9,
+  "part": 0,
+  "who": "tiko",
+  "text": "There! The apple! Red!",
+  "file": "09_0.wav",
+  "dur": 1.965,
+  "clarity": 1.0
+ },
+ {
+  "event": 11,
+  "part": 0,
+  "who": "tiko",
+  "text": "Kids, where is something orange?",
+  "file": "11_0.wav",
+  "dur": 1.91,
+  "clarity": 1.0
+ },
+ {
+  "event": 12,
+  "part": 0,
+  "who": "lulu",
+  "text": "The orange! Orange!",
+  "file": "12_0.wav",
+  "dur": 1.658,
+  "clarity": 1.0
+ },
+ {
+  "event": 13,
+  "part": 0,
+  "who": "lulu",
+  "text": "Kids, what is yellow? Look up!",
+  "file": "13_0.wav",
+  "dur": 1.966,
+  "clarity": 1.0
+ },
+ {
+  "event": 14,
+  "part": 0,
+  "who": "tiko",
+  "text": "The sun! Yellow!",
+  "file": "14_0.wav",
+  "dur": 1.378,
+  "clarity": 1.0
+ },
+ {
+  "event": 16,
+  "part": 0,
+  "who": "tiko",
+  "text": "Kids, where is something green?",
+  "file": "16_0.wav",
+  "dur": 1.855,
+  "clarity": 1.0
+ },
+ {
+  "event": 17,
+  "part": 0,
+  "who": "lulu",
+  "text": "The frog! Green!",
+  "file": "17_0.wav",
+  "dur": 1.405,
+  "clarity": 1.0
+ },
+ {
+  "event": 19,
+  "part": 0,
+  "who": "lulu",
+  "text": "Kids, where is something blue?",
+  "file": "19_0.wav",
+  "dur": 1.703,
+  "clarity": 1.0
+ },
+ {
+  "event": 20,
+  "part": 0,
+  "who": "tiko",
+  "text": "The water! Blue!",
+  "file": "20_0.wav",
+  "dur": 1.411,
+  "clarity": 1.0
+ },
+ {
+  "event": 22,
+  "part": 0,
+  "who": "tiko",
+  "text": "Kids, can you find purple?",
+  "file": "22_0.wav",
+  "dur": 1.853,
+  "clarity": 1.0
+ },
+ {
+  "event": 23,
+  "part": 0,
+  "who": "lulu",
+  "text": "The flower! Purple!",
+  "file": "23_0.wav",
+  "dur": 1.362,
+  "clarity": 1.0
+ },
+ {
+  "event": 24,
+  "part": 0,
+  "who": "tiko",
+  "text": "My colors are back! Rainbow spikes! Rawr!",
+  "file": "24_0.wav",
+  "dur": 3.386,
+  "clarity": 1.0
+ },
+ {
+  "event": 25,
+  "part": 0,
+  "who": "both",
+  "text": "Red, orange, yellow, green!",
+  "file": "25_0.wav",
+  "dur": 1.887,
+  "clarity": 1.0
+ },
+ {
+  "event": 25,
+  "part": 1,
+  "who": "both",
+  "text": "Blue and purple, can you see?",
+  "file": "25_1.wav",
+  "dur": 1.831,
+  "clarity": 1.0
+ },
+ {
+  "event": 25,
+  "part": 2,
+  "who": "both",
+  "text": "Rainbow, rainbow, shining bright!",
+  "file": "25_2.wav",
+  "dur": 2.031,
+  "clarity": 1.0
+ },
+ {
+  "event": 25,
+  "part": 3,
+  "who": "both",
+  "text": "Tiko's spikes are full of light!",
+  "file": "25_3.wav",
+  "dur": 1.933,
+  "clarity": 0.83
+ },
+ {
+  "event": 26,
+  "part": 0,
+  "who": "tiko",
+  "text": "Thank you, kids! You found my colors!",
+  "file": "26_0.wav",
+  "dur": 2.87,
+  "clarity": 1.0
+ },
+ {
+  "event": 27,
+  "part": 0,
+  "who": "lulu",
+  "text": "See you next time! Bye-bye!",
+  "file": "27_0.wav",
+  "dur": 1.789,
+  "clarity": 1.0
+ }
+]
