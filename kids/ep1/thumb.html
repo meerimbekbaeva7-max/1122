@@ -1,0 +1,51 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(../node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1280px;height:720px;overflow:hidden;font-family:Fredoka,sans-serif;background:#ffd23f}
+canvas{position:absolute;inset:0}
+.t{position:absolute;font-weight:700;line-height:.92;-webkit-text-stroke:18px #1b1b2f;paint-order:stroke fill;filter:drop-shadow(0 10px 0 rgba(0,0,0,.35))}
+.chip{position:absolute;left:34px;top:30px;background:#1b1b2f;color:#fff;border-radius:26px;padding:8px 26px 14px;font-weight:700;font-size:40px;letter-spacing:1px;transform:rotate(-4deg)}
+.chip b{color:#2fc7c0}.chip i{font-style:normal;color:#ff5fa2}
+</style></head><body>
+<canvas id="gl" width="1280" height="720"></canvas>
+<div class="chip"><b>TIKO</b> &amp; <i>LULU</i></div>
+<div class="t" id="t1" style="right:40px;top:40px;font-size:120px;text-align:right;color:#fff">WHERE<br>ARE MY</div>
+<div class="t" id="t2" style="right:36px;top:270px;font-size:150px;text-align:right"></div>
+<div class="t" style="right:70px;top:470px;font-size:190px;color:#ffd23f;transform:rotate(12deg)">?</div>
+<script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';import {makeTiko} from '../tiko/tiko.js';import {makeLulu} from '../lulu/lulu.js';
+const TC=['#ff3b3b','#ff8a00','#ffc400','#2fd65a','#2f8bff','#7b5bff'];
+document.getElementById('t2').innerHTML=[...'COLORS'].map((c,i)=>`<span style="color:${TC[i]}">${c}</span>`).join('');
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,preserveDrawingBuffer:true});r.setPixelRatio(1);r.setSize(1280,720,false);
+r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.15;
+const sc=new THREE.Scene();const cam=new THREE.PerspectiveCamera(34,1280/720,.1,200);
+const ctex=(w,h,fn)=>{const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;};
+// bright sunburst background
+sc.background=ctex(1280,720,(g,w,h)=>{const gr=g.createRadialGradient(380,380,0,380,380,900);gr.addColorStop(0,'#fff6b0');gr.addColorStop(.4,'#ffd23f');gr.addColorStop(1,'#ff8a00');g.fillStyle=gr;g.fillRect(0,0,w,h);
+ g.translate(380,380);for(let i=0;i<28;i++){g.fillStyle=i%2?'rgba(255,255,255,.28)':'rgba(255,255,255,0)';g.beginPath();g.moveTo(0,0);g.arc(0,0,1400,i/28*Math.PI*2,(i+1)/28*Math.PI*2);g.fill();}});
+sc.add(new THREE.HemisphereLight('#ffffff','#ffe2a0',1.5));const dl=new THREE.DirectionalLight('#fff',2.4);dl.position.set(3,6,10);sc.add(dl);
+const rim=new THREE.DirectionalLight('#ffffff',1.6);rim.position.set(-6,4,-6);sc.add(rim);sc.add(new THREE.AmbientLight('#fff',.35));
+const std=(c,rr=.3,e={})=>new THREE.MeshStandardMaterial({color:c,roughness:rr,...e});
+// Tiko, big, surprised, turned so the half-coloured crest shows
+const T=makeTiko(THREE);sc.add(T.g);T.g.position.set(-2.4,-2.55,0);T.g.rotation.y=.85;T.g.scale.setScalar(1.75);
+T.spikes.forEach((s,i)=>{s.material=i<3?std(TC[i],.25,{emissive:TC[i],emissiveIntensity:.35}):std('#c9d6d4',.35);});
+T.mouth.scale.set(1.25,1.9,1);T.eyes.forEach(e=>e.scale.set(1.18,1.3,1));
+T.arms.forEach((a,i)=>a.rotation.z=(i?-1:1)*-1.4);
+// Lulu, smaller, pointing at him
+const L=makeLulu(THREE);sc.add(L.g);L.g.position.set(-5.9,-2.5,1.2);L.g.rotation.y=.6;L.g.scale.setScalar(.95);L.mouth.scale.y=1.2;L.drops.visible=false;
+L.arms[0].position.y+=.5;
+// props from the episode with faces
+function faceOn(g,s,z){for(const sx of[-1,1]){const w=new THREE.Mesh(new THREE.SphereGeometry(.2*s,16,12),std('#fff',.2));w.scale.z=.6;w.position.set(sx*.3*s,.15*s,z);g.add(w);
+ const p=new THREE.Mesh(new THREE.SphereGeometry(.11*s,12,8),std('#1b1b2f',.2));p.scale.z=.6;p.position.set(sx*.3*s,.15*s,z+.09*s);g.add(p);}
+ const m=new THREE.Mesh(new THREE.SphereGeometry(.14*s,12,8),std('#5a0f1f',.4));m.scale.set(1.3,.7,.35);m.position.set(0,-.2*s,z);g.add(m);}
+function ball(c,x,y,z,s){const g=new THREE.Group();const b=new THREE.Mesh(new THREE.SphereGeometry(s,32,24),std(c,.3));g.add(b);faceOn(g,s*1.1,s*.92);g.position.set(x,y,z);sc.add(g);return g;}
+const apple=ball('#ff2a2a',-6.2,2.3,-2,.6);const lf=new THREE.Mesh(new THREE.SphereGeometry(.2,12,8),std('#38d64a',.4));lf.scale.set(1,.35,.55);lf.position.set(.2,.7,0);apple.add(lf);apple.rotation.z=.25;
+const orange=ball('#ff8a00',2.6,-2.7,0,.5);orange.rotation.z=-.3;
+const frog=ball('#2fd65a',1.0,-2.0,-1,.45);
+const flower=new THREE.Group();for(let k=0;k<6;k++){const p=new THREE.Mesh(new THREE.SphereGeometry(.32,16,12),std('#9b59ff',.35));const a=k/6*Math.PI*2;p.position.set(Math.cos(a)*.42,Math.sin(a)*.42,0);p.scale.z=.35;flower.add(p);}
+const fc=new THREE.Mesh(new THREE.SphereGeometry(.3,16,12),std('#ffd23f',.4));fc.scale.z=.6;flower.add(fc);faceOn(flower,.45,.2);flower.position.set(-.4,3.1,-2.5);flower.rotation.z=.3;sc.add(flower);
+// little sparkle stars
+for(let i=0;i<14;i++){const s=new THREE.Mesh(new THREE.OctahedronGeometry(.08+Math.random()*.08),new THREE.MeshBasicMaterial({color:'#fff'}));s.position.set(-6+Math.random()*9,-2+Math.random()*5,-1);sc.add(s);}
+cam.position.set(0,.6,12.5);cam.lookAt(-.6,.4,0);r.render(sc,cam);
+document.fonts.ready.then(()=>window.ready=true);
+</script></body></html>
