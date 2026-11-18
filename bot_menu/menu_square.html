@@ -1,0 +1,84 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;width:1080px;height:1080px;overflow:hidden;background:#1a0508}
+svg,canvas{position:absolute;inset:0;display:block}
+</style></head><body>
+<svg id="s" width="1080" height="1080" viewBox="0 0 1080 1080">
+<defs>
+ <radialGradient id="bg" cx="50%" cy="45%" r="75%"><stop offset="0" stop-color="#7a1c2c"/><stop offset=".5" stop-color="#3a0b14"/><stop offset="1" stop-color="#120306"/></radialGradient>
+ <linearGradient id="letter" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd9df"/><stop offset=".6" stop-color="#e7a2ad"/><stop offset="1" stop-color="#8a2a3a" stop-opacity=".2"/></linearGradient>
+ <radialGradient id="core" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff4f2"/><stop offset=".25" stop-color="#ffb3bf" stop-opacity=".9"/><stop offset=".6" stop-color="#ff4d6d" stop-opacity=".45"/><stop offset="1" stop-color="#ff4d6d" stop-opacity="0"/></radialGradient>
+ <linearGradient id="bodyM" x1="1" y1="0" x2="0" y2=".3"><stop offset="0" stop-color="#4a1420"/><stop offset=".3" stop-color="#22070d"/><stop offset="1" stop-color="#0e0205"/></linearGradient>
+ <linearGradient id="bodyW" x1="0" y1="0" x2="1" y2=".3"><stop offset="0" stop-color="#4a1420"/><stop offset=".3" stop-color="#22070d"/><stop offset="1" stop-color="#0e0205"/></linearGradient>
+ <linearGradient id="heart" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb3c1"/><stop offset=".45" stop-color="#ff3d63"/><stop offset="1" stop-color="#8a0f2a"/></linearGradient>
+ <filter id="b4"><feGaussianBlur stdDeviation="4"/></filter><filter id="b10"><feGaussianBlur stdDeviation="10"/></filter>
+ <filter id="b30"><feGaussianBlur stdDeviation="30"/></filter><filter id="b60"><feGaussianBlur stdDeviation="60"/></filter>
+ <filter id="rim" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5" result="a"/><feGaussianBlur stdDeviation="12" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="a"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="glowL" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14" result="g"/><feColorMatrix in="g" values="0 0 0 0 1  0 0 0 0 .35  0 0 0 0 .45  0 0 0 .9 0"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="grunge"><feTurbulence type="fractalNoise" baseFrequency=".9 .05" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 .75  0 0 0 0 .78  0 0 0 2.2 -1.2"/></filter>
+ <filter id="smoke"><feTurbulence type="fractalNoise" baseFrequency=".004 .008" numOctaves="4" seed="11"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 .35  0 0 0 0 .45  0 0 0 .8 -.3"/><feGaussianBlur stdDeviation="4"/></filter>
+ <clipPath id="clipM"><path id="pM"/></clipPath><clipPath id="clipW"><path id="pW"/></clipPath>
+</defs>
+<rect width="1080" height="1080" fill="url(#bg)"/>
+<rect width="1080" height="1080" filter="url(#smoke)" opacity=".55"/>
+<!-- grungy light band behind (like a torn tape) -->
+<rect x="-20" y="150" width="1120" height="16" filter="url(#grunge)" opacity=".55" transform="rotate(-3 540 158)"/>
+<rect x="-20" y="168" width="1120" height="3" fill="#ffd0d8" opacity=".25" transform="rotate(-3 540 168)"/>
+<!-- giant background letters -->
+<g filter="url(#glowL)" opacity=".92">
+ <text x="540" y="760" text-anchor="middle" font-family="Inter Display, Inter, sans-serif" font-weight="900" font-size="720" letter-spacing="-30" fill="url(#letter)">BK</text>
+</g>
+<!-- glow behind the faces -->
+<ellipse cx="540" cy="520" rx="380" ry="420" fill="#ff2d55" opacity=".35" filter="url(#b60)"/>
+<ellipse cx="540" cy="480" rx="120" ry="230" fill="url(#core)" filter="url(#b30)"/>
+<!-- couple -->
+<g transform="translate(-388 -38) scale(1.45)">
+ <use href="#pM" fill="url(#bodyM)"/><use href="#pW" fill="url(#bodyW)"/><path id="hairW" fill="url(#bodyW)"/>
+ <g filter="url(#rim)">
+  <use href="#pM" fill="none" stroke="#ffb3c1" stroke-width="1.8" clip-path="url(#clipM)"/>
+  <use href="#pW" fill="none" stroke="#ffb3c1" stroke-width="1.8" clip-path="url(#clipW)"/>
+ </g>
+ <g id="rimHot" filter="url(#rim)"></g>
+ <g clip-path="url(#clipM)"><ellipse cx="600" cy="560" rx="70" ry="160" fill="#ff7088" opacity=".22" filter="url(#b30)"/></g>
+ <g clip-path="url(#clipW)"><ellipse cx="690" cy="560" rx="70" ry="160" fill="#ff7088" opacity=".22" filter="url(#b30)"/></g>
+</g>
+<!-- floating hearts & petals (depth: blurred ones far, sharp ones near) -->
+<g id="float"></g>
+<!-- logo -->
+<circle cx="540" cy="842" r="150" fill="#000" opacity=".55" filter="url(#b30)"/>
+<circle cx="540" cy="842" r="152" fill="none" stroke="#ff5fa0" stroke-width="10" opacity=".55" filter="url(#b10)"/>
+<image href="logo_round.png" x="395" y="697" width="290" height="290"/>
+<!-- vignette -->
+<radialGradient id="vig" cx="50%" cy="48%" r="70%"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".8"/></radialGradient>
+<rect width="1080" height="1080" fill="url(#vig)"/>
+</svg>
+<canvas id="grain" width="1080" height="1080"></canvas>
+<script>
+const NS='http://www.w3.org/2000/svg',$=id=>document.getElementById(id),el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;};
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+function spline(pts,closed=true,ten=.5){let d=`M${pts[0][0]} ${pts[0][1]}`;const n=pts.length;
+ for(let i=0;i<(closed?n:n-1);i++){const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+  const c1=[p1[0]+(p2[0]-p0[0])*ten/3,p1[1]+(p2[1]-p0[1])*ten/3],c2=[p2[0]-(p3[0]-p1[0])*ten/3,p2[1]-(p3[1]-p1[1])*ten/3];
+  d+=` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0]} ${p2[1]}`;}return d+(closed?'Z':'');}
+const man=[[236,720],[244,640],[262,592],[300,552],[372,518],[420,494],[440,470],[446,446],
+ [452,420],[450,392],[444,366],[434,346],[426,322],[424,292],[432,262],[450,238],[480,222],[516,218],[552,226],[580,246],[596,272],[602,300],[600,320],[606,336],[618,350],[604,366],[598,372],[604,380],[600,388],[592,394],[598,400],[596,410],[586,414],[574,420],[570,432],[562,444],[552,452],[540,454],[532,466],[534,492],[548,516],[566,548],[580,600],[586,660],[588,720]];const wom=[[1000,720],[992,650],[968,600],[920,566],[862,544],[834,528],[818,506],[812,480],
+ [818,452],[830,420],[836,392],[840,356],[840,322],[834,290],[818,266],[790,248],[758,244],[728,250],[708,268],[694,292],[688,318],[690,338],[688,352],[678,366],[690,380],[694,386],[688,392],[692,398],[700,404],[694,410],[700,418],[710,422],[722,428],[730,438],[740,450],[752,458],[764,464],[772,482],[770,510],[756,540],[742,580],[736,640],[738,720]];
+man.push([588,800],[236,800]);wom.splice(0,0,[1000,800]);wom.push([738,800]);
+$('pM').setAttribute('d',spline(man));$('pW').setAttribute('d',spline(wom));$('hairW').setAttribute('d',spline([[700,282],[714,256],[742,236],[780,226],[822,232],[858,254],[882,290],[896,340],[904,400],[916,470],[940,540],[972,610],[996,680],[1004,720],[900,720],[880,650],[864,580],[850,520],[842,470],[842,420],[846,370],[844,326],[830,290],[800,268],[764,262],[730,272]],true,.6));
+const hot=$('rimHot');
+el('path',{d:spline([[236,720],[244,640],[262,592],[300,552],[372,518],[420,494],[440,470],[446,446],
+ [452,420],[450,392],[444,366],[434,346],[426,322],[424,292],[432,262],[450,238],[480,222],[516,218],[552,226],[580,246],[596,272],[602,300],[600,320],[606,336],[618,350],[604,366],[598,372],[604,380],[600,388],[592,394],[598,400],[596,410],[586,414],[574,420],[570,432],[562,444],[552,452],[540,454],[532,466],[534,492],[548,516],[566,548],[580,600],[586,660],[588,720]].slice(20,37),false),fill:'none',stroke:'#fff1ec','stroke-width':2.2,'stroke-linecap':'round'},hot);
+el('path',{d:spline([[1000,720],[992,650],[968,600],[920,566],[862,544],[834,528],[818,506],[812,480],
+ [818,452],[830,420],[836,392],[840,356],[840,322],[834,290],[818,266],[790,248],[758,244],[728,250],[708,268],[694,292],[688,318],[690,338],[688,352],[678,366],[690,380],[694,386],[688,392],[692,398],[700,404],[694,410],[700,418],[710,422],[722,428],[730,438],[740,450],[752,458],[764,464],[772,482],[770,510],[756,540],[742,580],[736,640],[738,720]].slice(19,36),false),fill:'none',stroke:'#fff1ec','stroke-width':2.2,'stroke-linecap':'round'},hot);
+// hearts and rose petals
+const F=$('float');
+const heartD=(s)=>`M0 ${.35*s} C${-.9*s} ${-.25*s} ${-.45*s} ${-1.0*s} 0 ${-.45*s} C${.45*s} ${-1.0*s} ${.9*s} ${-.25*s} 0 ${.35*s}Z`;
+const petalD=(s)=>`M0 ${-s} C${.7*s} ${-.6*s} ${.6*s} ${.6*s} 0 ${s} C${-.5*s} ${.5*s} ${-.7*s} ${-.5*s} 0 ${-s}Z`;
+const items=[[150,300,120,-22,0,0],[935,270,105,20,0,0],[95,640,62,15,1,0],[985,620,70,-16,1,0],[270,180,24,30,2,1],[820,140,22,-35,2,1],[70,900,30,40,2,1],[1010,880,28,-20,2,1],[330,470,16,10,2,1],[760,430,18,-50,2,1]];
+items.forEach(([x,y,s,rot,depth,petal],i)=>{const g=el('g',{transform:`translate(${x} ${y}) rotate(${rot})`,filter:depth===1?'url(#b4)':depth===2?'url(#b10)':'',opacity:depth===2?.6:1},F);
+ el('path',{d:petal?petalD(s):heartD(s),fill:'url(#heart)'},g);
+ if(!petal){el('path',{d:`M${-.45*s} ${-.55*s} C${-.6*s} ${-.3*s} ${-.5*s} ${-.05*s} ${-.3*s} ${.05*s}`,fill:'none',stroke:'#fff','stroke-width':s*.08,'stroke-linecap':'round',opacity:.7},g);
+  el('path',{d:heartD(s),fill:'none',stroke:'#ffd0d8','stroke-width':1.5,opacity:.6},g);}});
+// grain
+const g=$('grain').getContext('2d');const im=g.createImageData(1080,1080),d=im.data;let sd=777;for(let i=0;i<d.length;i+=4){sd=(sd*16807)%2147483647;const v=sd%255;d[i]=d[i+1]=d[i+2]=v;d[i+3]=16;}g.putImageData(im,0,0);
+document.fonts.ready.then(()=>setTimeout(()=>window.ready=true,600));
+</script></body></html>
