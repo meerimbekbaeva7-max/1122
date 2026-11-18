@@ -48,7 +48,7 @@ const $=id=>document.getElementById(id);
 $('l1').innerHTML=[...'Rainbow'].map((c,i)=>`<span class="ch" style="color:${TC[i%7]}">${c}</span>`).join('');
 $('l2').innerHTML=[...'Tots'].map((c,i)=>`<span class="ch" style="color:${['#2fd65a','#2f8bff','#7b5bff','#ff5fa2'][i]}">${c}</span>`).join('');
 const L1=[...$('l1').children],L2=[...$('l2').children];
-const W1=S.lines[0].words[0].t0,W2=S.lines[0].words[1].t0;
+const W1=1.667,W2=2.14;   // spoken 'Rainbow' / 'Tots' onsets
 window.renderAt=function(t){
  burst.rotation.z=-t*.35;flowers.forEach((f,i)=>f.rotation.z=Math.sin(t*3+i)*.15);
  // rainbow draws left->right, each band slightly staggered

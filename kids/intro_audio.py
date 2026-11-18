@@ -1,5 +1,5 @@
 """Rainbow Tots 5-second intro: xylophone glissando, pops, jingle backing, ta-da. -> build_intro/mix.wav"""
-import json, numpy as np, soundfile as sf
+import json, os, numpy as np, soundfile as sf
 from scipy.signal import butter, sosfilt
 SR=48000; DUR=5.0; N=int(SR*DUR); rng=np.random.default_rng(7)
 song=json.load(open('build_intro/song.json')); B=song['beat']; T0=song['intro']   # 1.667 s
@@ -34,6 +34,10 @@ for k,c in enumerate(["C","F","G"]):
     at=T0+k*2*B;add(at,uke([mhz(m) for m in CH[c]],2*B));add(at,np.sin(2*np.pi*mhz(CH[c][0]-24)*np.arange(int(2*B*SR))/SR)*np.exp(-np.arange(int(2*B*SR))/SR*3)*.3)
 for b in range(5): add(T0+b*B,kick() if b%2==0 else clap())
 for b in range(10): add(T0+b*B/2,sosfilt(butter(2,6000,'high',fs=SR,output='sos'),rng.standard_normal(int(.05*SR)))*np.exp(-np.arange(int(.05*SR))/SR*60)*.04)
+# 3b) jingle melody on xylophone (C-E-G), so a spoken voice still sounds like a jingle
+if os.environ.get('MELODY') == '1':
+    for at,n,d in [(1.667,"C5",.35),(1.92,"E5",.35),(2.14,"G5",1.4)]:   # follows the spoken 'Rain-bow Tots!'
+        add(at,xylo(hz(n),d+.3,.22)); add(at,xylo(hz(n)*2,d+.2,.08))
 # 4) ta-da at the end of "Tots!"
 TD=T0+5*B
 for m in [48,60,64,67,72,76,79,84]: add(TD,xylo(mhz(m),1.25,.07))
