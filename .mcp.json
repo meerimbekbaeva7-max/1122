@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "music-tools": {
+      "command": "node",
+      "args": ["claude-suno-mcp/server.js"],
+      "env": {
+        "MUSIC_API_URL": "",
+        "MUSIC_API_KEY": ""
+      }
+    }
+  }
+}
