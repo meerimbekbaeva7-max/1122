@@ -1,0 +1,96 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+@font-face{font-family:Fredoka;src:url(node_modules/@fontsource/fredoka/files/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700}
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1080px;height:1920px;overflow:hidden;font-family:Fredoka,sans-serif;background:#8fd8ff}
+#gl{position:absolute;inset:0}
+.word{position:absolute;left:20px;right:20px;top:70px;text-align:center;font-weight:700;font-size:175px;line-height:1;-webkit-text-stroke:16px #fff;paint-order:stroke fill;filter:drop-shadow(0 12px 0 rgba(0,0,0,.18))}
+.lyr{position:absolute;left:50%;bottom:330px;transform:translateX(-50%);background:rgba(255,255,255,.93);border-radius:56px;padding:20px 40px 26px;width:max-content;max-width:980px;text-align:center;font-weight:700;font-size:66px;color:#3b3b55;box-shadow:0 14px 0 rgba(0,0,0,.12)}
+.lyr span{display:inline-block;margin:0 14px;transform-origin:center bottom}
+.flash{position:absolute;inset:0;background:#fff;opacity:0}
+</style></head><body>
+<canvas id="gl" width="1080" height="1920"></canvas><div class="word" id="word"></div><div class="lyr" id="lyr"></div><div class="flash" id="flash"></div>
+<script src="build_count/data.js"></script>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';import {makeTiko} from './tiko/tiko.js';import {makeLulu} from './lulu/lulu.js';
+const S=window.SONG,ENV=window.ENV,B=S.beat,FPS=30;
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),prog=(t,a,b)=>clamp((t-a)/(b-a)),eo=x=>1-Math.pow(1-x,3),eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,back=x=>{const c=2.2;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)},lerp=(a,b,x)=>a+(b-a)*x;
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+const TC=['#ff3b3b','#ff8a00','#ffc400','#2fd65a','#2f8bff','#7b5bff','#ff5fa2'],NC=['#ff3b3b','#ff8a00','#ffc400','#2fd65a','#2f8bff'];
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,preserveDrawingBuffer:true});r.setPixelRatio(1);r.setSize(1080,1920,false);
+r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.12;
+const scene=new THREE.Scene();const cam=new THREE.PerspectiveCamera(48,1080/1920,.1,200);
+const ctex=(w,h,fn)=>{const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;};
+scene.background=ctex(2,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#3ec4ff');gr.addColorStop(.6,'#a8e6ff');gr.addColorStop(1,'#e0f8ff');g.fillStyle=gr;g.fillRect(0,0,w,h);});
+const burst=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,opacity:.6,map:ctex(1024,1024,(g)=>{g.translate(512,512);for(let i=0;i<24;i++){g.fillStyle=i%2?'rgba(255,255,255,.55)':'rgba(255,255,255,0)';g.beginPath();g.moveTo(0,0);g.arc(0,0,512,i/24*Math.PI*2,(i+1)/24*Math.PI*2);g.fill();}})}));burst.position.set(0,4,-15);scene.add(burst);
+scene.add(new THREE.HemisphereLight('#ffffff','#9be38a',1.5));const sl=new THREE.DirectionalLight('#fff',2.2);sl.position.set(4,8,10);scene.add(sl);scene.add(new THREE.AmbientLight('#fff',.4));
+const hill=new THREE.Mesh(new THREE.SphereGeometry(40,96,48),new THREE.MeshStandardMaterial({color:'#5fdc4f',roughness:.85}));hill.position.set(0,-40.05,0);scene.add(hill);
+for(const [x,z,rr] of[[-14,-22,16],[15,-25,18]]){const h=new THREE.Mesh(new THREE.SphereGeometry(rr,48,24),new THREE.MeshStandardMaterial({color:'#8ff07a',roughness:.9}));h.position.set(x,-rr+3,z);scene.add(h);}
+const pc=['#ff5fa2','#ffd23f','#ffffff','#ff7b3a','#b07bff'];const flowers=[];
+for(let i=0;i<16;i++){const f=new THREE.Group();const x=(rnd(i)-.5)*10,z=2.4+rnd(i+9)*3;const st=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.5),new THREE.MeshStandardMaterial({color:'#2f9e44'}));st.position.y=.25;f.add(st);
+ for(let k=0;k<5;k++){const p=new THREE.Mesh(new THREE.SphereGeometry(.12,12,8),new THREE.MeshStandardMaterial({color:pc[i%5]}));const a=k/5*Math.PI*2;p.position.set(Math.cos(a)*.14,.55+Math.sin(a)*.14,0);p.scale.z=.4;f.add(p);}
+ f.position.set(x,-.05-(x*x+z*z)/80,z);scene.add(f);flowers.push(f);}
+const T=makeTiko(THREE);scene.add(T.g);const Lu=makeLulu(THREE);scene.add(Lu.g);
+const sh=new THREE.Mesh(new THREE.CircleGeometry(1.4,40),new THREE.MeshBasicMaterial({color:'#1f5a2a',transparent:true,opacity:.2}));sh.rotation.x=-Math.PI/2;sh.position.y=.02;scene.add(sh);
+// number stars
+const starShape=(()=>{const s=new THREE.Shape();for(let i=0;i<10;i++){const rr=i%2?.42:1,a=Math.PI/2+i*Math.PI/5;i?s.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):s.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);}return s;})();
+const sg=new THREE.ExtrudeGeometry(starShape,{depth:.3,bevelEnabled:true,bevelThickness:.12,bevelSize:.1,bevelSegments:4,curveSegments:8});sg.center();
+const stars=NC.map((c,i)=>{const g=new THREE.Group();const m=new THREE.Mesh(sg,new THREE.MeshStandardMaterial({color:c,roughness:.25,emissive:c,emissiveIntensity:.15}));g.add(m);
+ const lab=new THREE.Mesh(new THREE.PlaneGeometry(1.0,1.0),new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,map:ctex(256,256,(x,w,h)=>{x.font='bold 190px Fredoka, sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineWidth=20;x.strokeStyle='rgba(0,0,0,.22)';x.strokeText(String(i+1),w/2,h*.56);x.fillStyle='#fff';x.fillText(String(i+1),w/2,h*.56);})}));
+ lab.position.z=.29;g.add(lab);g.visible=false;scene.add(g);return g;});
+const CN=220;const conf=new THREE.InstancedMesh(new THREE.PlaneGeometry(.18,.3),new THREE.MeshBasicMaterial({side:THREE.DoubleSide}),CN);for(let i=0;i<CN;i++)conf.setColorAt(i,new THREE.Color(TC[i%7]));scene.add(conf);const dm=new THREE.Object3D();
+const L=S.lines,envAt=t=>ENV[Math.min(ENV.length-1,Math.max(0,Math.floor(t*FPS)))]||0,bounce=t=>Math.abs(Math.sin(Math.PI*t/B));
+const wordAt=(li,t)=>L[li].words.findIndex(w=>t>=w.t0&&t<w.t1);
+const catchT=[L[1].words[0].t0,L[1].words[1].t0,L[1].words[2].t0,L[2].words[0].t0,L[2].words[1].t0];
+const countT=L[3].words.slice(0,5).map(w=>w.t0);const yayT=L[3].words[5].t0;
+const SLOT=i=>new THREE.Vector3((i-2)*1.3,4.55,0);const LU_Y=6.15;
+const $=id=>document.getElementById(id);let last=-1;
+window.renderAt=function(t){
+ let li=L.findIndex(l=>t>=l.t0&&t<l.t1);if(li<0)li=L.length-1;const line=L[li],wi=wordAt(li,t),e=envAt(t),tag=line.tag;
+ burst.rotation.z=-t*.3;flowers.forEach((f,i)=>f.rotation.z=Math.sin(t*3+i)*.15);
+ // Lulu: floats in at the start, drifts, sings the hook
+ const lin=eo(prog(t,0,.8));const lx=Math.sin(t*1.1)*1.2;
+ Lu.g.position.set(lerp(-6,lx,lin),LU_Y+Math.sin(t*2.2)*.15,-.6);Lu.g.scale.setScalar(.62);Lu.g.rotation.y=Math.sin(t*1.3)*.25;
+ const luSing=tag==='ch_hook'||tag==='ch_all';Lu.mouth.scale.y=.25+(luSing?e:.05)*1.1;Lu.eyes.forEach(x=>x.scale.y=((t+.7)%2.9)<.12?.1:1);
+ const rain=tag==='ch_all'&&t>yayT||tag==='ch_hook'&&t>1;Lu.drops.visible=rain;if(rain)Lu.setDrops(t);
+ Lu.arms.forEach((a,i)=>a.position.y=1.05+(luSing?Math.abs(Math.sin(t*6+i))*.3:0));
+ // Tiko
+ let ry=-.15+Math.sin(t*2)*.12,hop=bounce(t)*.3;
+ let ci=-1;for(let i=0;i<5;i++)if(t>=catchT[i]-.55&&t<catchT[i]+.35)ci=i;
+ const tx=ci>=0?lerp(0,(Math.sin((catchT[ci]-.55)*1.1)*1.2)*.0,1):0;
+ if(ci>=0){hop=Math.sin(Math.PI*prog(t,catchT[ci]-.25,catchT[ci]+.25))*.8;}
+ if(tag==='ch_all'){hop=bounce(t)*.6;ry=Math.sin(t*Math.PI/B)*.5;}
+ T.g.position.set(0,hop,.4);T.g.rotation.y=ry;const sq=1+(.12*(1-bounce(t))**2-.04);T.body.scale.set(1/Math.sqrt(sq),sq,1/Math.sqrt(sq));
+ const tSing=tag==='c1'||tag==='c2'||tag==='ch_all'||tag==='ch_cta';T.mouth.scale.y=.25+(tSing?e:0)*1.2;T.eyes.forEach(x=>x.scale.y=((t+1.3)%3.1)<.12?.1:1);
+ T.arms.forEach((a,i)=>{a.rotation.z=(i?-1:1)*(ci>=0?-1.6*Math.sin(Math.PI*prog(t,catchT[ci]-.5,catchT[ci]+.35)):0);if(tag==='ch_cta'&&i===1)a.rotation.z=lerp(0,-2.2,eo(prog(t,line.t0,line.t0+.4)));});
+ T.tail.rotation.y=Math.sin(t*6)*.25;sh.scale.setScalar(1-hop*.25);
+ // stars: drop from Lulu -> caught by Tiko -> fly to the counter row
+ stars.forEach((s,i)=>{const c=catchT[i];if(t<c-.6){s.visible=false;return;}s.visible=true;
+  const luP=new THREE.Vector3(Math.sin((c-.6)*1.1)*1.2,LU_Y-.4,-.4),hand=new THREE.Vector3(0,3.75,1.0),slot=SLOT(i);
+  let p,sc=.55,spin=0;
+  if(t<c){const k=prog(t,c-.6,c);p=luP.clone().lerp(hand,k*k);p.y+=Math.sin(Math.PI*k)*.3;sc=lerp(.25,.6,k);spin=k*6;}
+  else if(t<c+.25){p=hand.clone();sc=.6*(1+.25*Math.sin(Math.PI*prog(t,c,c+.25)));}
+  else{const k=eio(prog(t,c+.25,c+.85));p=hand.clone().lerp(slot,k);p.y+=Math.sin(Math.PI*k)*1.0;sc=lerp(.6,.48,k);spin=0;}
+  let pulse=0;for(let j=0;j<5;j++)if(j===i){pulse=Math.sin(Math.PI*prog(t,countT[j],countT[j]+.3));}
+  if(t>yayT&&tag!=='ch_cta')pulse=Math.max(pulse,.35*Math.abs(Math.sin(t*8+i)));
+  s.position.copy(p);s.position.y+=Math.sin(t*3+i)*.05;s.scale.setScalar(sc*(1+pulse*.5));s.rotation.set(0,Math.sin(t*2+i)*.35,spin);
+  s.children[0].material.emissiveIntensity=.15+pulse*.9;});
+ const confOn=t>yayT||tag==='ch_hook';
+ for(let i=0;i<CN;i++){const fall=(t*(1.2+rnd(i+3))+rnd(i+7)*14)%14;dm.position.set((rnd(i+11)-.5)*10,12-fall,(rnd(i+13)-.5)*5);dm.rotation.set(t*3*rnd(i+1),t*4*rnd(i+2),t*2);dm.scale.setScalar(confOn?1:.0001);dm.updateMatrix();conf.setMatrixAt(i,dm.matrix);}
+ conf.instanceMatrix.needsUpdate=true;
+ let cz=16.5,cy=2.8,ly=2.6;if(tag==='ch_hook'){const k=eo(prog(t,0,1.4));cz=lerp(12.5,16.5,k);ly=lerp(4.2,2.6,k);}
+ cam.position.set(Math.sin(t*.7)*.3,cy,cz);cam.lookAt(0,ly,0);r.render(scene,cam);
+ // overlays
+ const w=$('word');let key='',html='',t0=line.t0;
+ if(tag==='ch_hook'){key='lulu';html=[...'LULU!'].map((c,i)=>`<span style="color:${TC[(i+4)%7]}">${c}</span>`).join('');t0=-1;}
+ else if(tag==='c1'||tag==='c2'){let n=-1;for(let i=0;i<5;i++)if(t>=catchT[i])n=i;if(n>=0){key='n'+n;html=`<span style="color:${NC[n]}">${n+1}</span>`;t0=catchT[n];}if(tag==='c1'&&wi>=3){key='tiko';html='<span style="color:#2fc7c0">TIKO!</span>';t0=L[1].words[3].t0;}}
+ else if(tag==='ch_all'){let n=-1;for(let i=0;i<5;i++)if(t>=countT[i])n=i;if(t>=yayT){key='yay';html=[...'YAY!'].map((c,i)=>`<span style="color:${TC[i]}">${c}</span>`).join('');t0=yayT;}else if(n>=0){key='a'+n;html=`<span style="color:${NC[n]}">${n+1}</span>`;t0=countT[n];}}
+ else if(tag==='ch_cta'&&t>=line.words[3].t0){key='r';html='<span style="color:#2fc7c0">RAWR!</span>';t0=line.words[3].t0;}
+ if(w.dataset.k!==key){w.dataset.k=key;w.innerHTML=html;w.dataset.t0=String(t0);}
+ const pw=key==='lulu'?1:back(prog(t,+w.dataset.t0,+w.dataset.t0+.28));w.style.transform=`scale(${Math.max(.001,pw*(1+.05*bounce(t)))}) rotate(${Math.sin(t*3)*3}deg)`;
+ const ly2=$('lyr');if(li!==last){last=li;ly2.innerHTML=line.words.map(x=>`<span>${x.w}</span>`).join('');}
+ [...ly2.children].forEach((sp,k)=>{const on=k===wi,done=k<wi;let c=TC[k%7];if(tag==='ch_all'&&k<5)c=NC[k];if(tag==='c1'&&k<3)c=NC[k];if(tag==='c2'&&k<2)c=NC[k+3];sp.style.color=on||done?c:'#3b3b55';sp.style.transform=on?'scale(1.14) translateY(-4px)':'none';});
+ ly2.style.opacity=tag==='ch_cta'?0:1;
+ $('flash').style.opacity=t>=yayT&&t<yayT+.3?.5*(1-prog(t,yayT,yayT+.3)):0;
+};
+window.sceneReady=true;
+</script></body></html>
