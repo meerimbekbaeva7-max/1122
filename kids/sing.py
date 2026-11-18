@@ -41,7 +41,9 @@ VOICE = os.environ.get("VOICE", "en_US-lessac-high")
 voice = PiperVoice.load(str(ROOT.parent / f"voice/models/{VOICE}.onnx"))
 cfg = SynthesisConfig(length_scale=1.0, noise_scale=0.4, noise_w_scale=0.5)
 FP = 5.0  # WORLD frame period, ms
-CLEAN = os.environ.get('CLEAN') == '1'   # studio-clean lead: no double, tight room, gate, cleaner excitation
+CLEAN = os.environ.get('CLEAN') == '1'
+HUMAN = os.environ.get('HUMAN') == '1'   # tiny timing/level/pitch imperfections like a real singer
+HRNG = np.random.default_rng(11)   # studio-clean lead: no double, tight room, gate, cleaner excitation
 
 
 from functools import lru_cache
@@ -72,7 +74,7 @@ _cache = {}
 def sing(word, notes, formant=1.0, vib=0.18, detune=0.0):
     spoken = word.split('|')[-1].strip(',!?').lower().replace('_', ' ')
     key = (spoken, tuple(map(tuple, notes)), formant, vib, detune)
-    if key in _cache: return _cache[key].copy()
+    if key in _cache and not HUMAN: return _cache[key].copy()
     x, sr = speak(spoken)
     f0, t = pw.harvest(x, sr, f0_floor=90, f0_ceil=650, frame_period=FP)
     f0 = fill_dropouts(f0, max_gap=int(35 / FP))
@@ -108,7 +110,11 @@ def sing(word, notes, formant=1.0, vib=0.18, detune=0.0):
     k = 6; target = np.exp(np.convolve(np.pad(np.log(target), k, mode="edge"), np.ones(2 * k + 1) / (2 * k + 1), "valid"))
     long_note = np.array([bounds[i][2] * BEAT >= 0.45 for i in idx])
     vib_env = np.clip((lt - 0.22) / 0.25, 0, 1) * long_note
-    f = target * scoop * 2 ** (vib / 12 * np.sin(2 * np.pi * 5.2 * tt) * vib_env)
+    vrate = 5.2 * (1 + (HRNG.uniform(-.06, .06) if HUMAN else 0))
+    f = target * scoop * 2 ** (vib / 12 * np.sin(2 * np.pi * vrate * tt) * vib_env)
+    if HUMAN:  # slow natural pitch drift, +-6 cents
+        drift = np.convolve(HRNG.standard_normal(m + 80), np.ones(80) / 80, 'valid')[:m]
+        f = f * 2 ** (drift / (np.abs(drift).max() + 1e-9) * 6 / 1200)
     f[~vmask] = 0
     # cleaner, less buzzy voiced frames
     ap2 = np.where(vmask[:, None], np.minimum(ap2, 0.35 + 0.65 * ap2 ** 2), ap2)
@@ -138,7 +144,10 @@ for li, (tag, words) in enumerate(SONG):
             continue
         word, notes = w
         y = sing(word, notes)
-        s = int(beat * BEAT * SR); vox[s:s + len(y)] += y
+        s = int(beat * BEAT * SR)
+        if HUMAN:
+            s = max(0, s + int(HRNG.uniform(-.012, .012) * SR)); y = y * 10 ** (HRNG.uniform(-1.2, 1.2) / 20)
+        vox[s:s + len(y)] += y
         if not CLEAN and (tag in ("chorus", "all", "vroom", "bye") or tag.startswith("ch")):   # subtle double-track on choruses
             y2 = sing(word, notes, vib=0.12, detune=9)
             d = int(0.022 * SR); dbl[s + d:s + d + len(y2)] += y2
