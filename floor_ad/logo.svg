@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+<defs>
+ <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbe6b8"/><stop offset=".45" stop-color="#d7a95f"/><stop offset=".7" stop-color="#a87633"/><stop offset="1" stop-color="#f1d49a"/></linearGradient>
+ <radialGradient id="bg" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#1c1915"/><stop offset="1" stop-color="#050505"/></radialGradient>
+</defs>
+<circle cx="400" cy="400" r="392" fill="url(#bg)" stroke="url(#g)" stroke-width="8"/>
+<g transform="translate(400 250)">
+ <path d="M-95 -120 H10 C110 -120 165 -55 165 30 C165 115 110 180 10 180 H-95 L-60 140 V-80 Z" fill="url(#g)"/>
+ <path d="M-25 -75 H10 C75 -75 110 -30 110 30 C110 92 75 135 10 135 H-25 Z" fill="#0c0b09"/>
+ <path d="M-60 -80 L-25 -75 V135 L-60 140 Z" fill="#7a5524"/>
+ <g transform="translate(-30 105) rotate(-38)" fill="url(#g)" stroke="#0c0b09" stroke-width="5">
+  <rect x="-40" y="-30" width="50" height="28" rx="3"/><rect x="14" y="-30" width="50" height="28" rx="3"/>
+  <rect x="-66" y="2" width="50" height="28" rx="3"/><rect x="-12" y="2" width="50" height="28" rx="3"/><rect x="42" y="2" width="30" height="28" rx="3"/>
+  <rect x="-40" y="34" width="50" height="28" rx="3"/><rect x="14" y="34" width="50" height="28" rx="3"/>
+ </g>
+</g>
+<text x="400" y="545" text-anchor="middle" font-family="Inter Display, Inter, sans-serif" font-weight="600" font-size="76" letter-spacing="10" fill="url(#g)">DVORPRO.KG</text>
+<text x="400" y="610" text-anchor="middle" font-family="Inter Display, Inter, sans-serif" font-weight="600" font-size="30" letter-spacing="7" fill="#d7a95f">БРУСЧАТКА В БИШКЕКЕ</text>
+<g stroke="#d7a95f" stroke-width="2.5" fill="none"><path d="M215 680 H370"/><path d="M430 680 H585"/><path d="M400 667 L413 680 L400 693 L387 680 Z"/></g>
+</svg>

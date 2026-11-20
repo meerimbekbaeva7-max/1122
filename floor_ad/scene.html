@@ -1,0 +1,92 @@
+<!doctype html><html lang="ky"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#000;font-family:"Inter Display",Inter,sans-serif}
+canvas{position:absolute;inset:0}
+.top{position:absolute;left:50px;right:50px;top:230px;text-align:center;font-weight:900;font-size:104px;line-height:1.02;color:#fff;letter-spacing:-1px;
+ text-shadow:0 6px 0 rgba(0,0,0,.55),0 0 30px rgba(0,0,0,.6);-webkit-text-stroke:3px rgba(0,0,0,.35)}
+.top .g{color:#ffcf5a}
+.top .r{color:#ff3b3b}
+.step{position:absolute;left:50%;top:120px;transform:translateX(-50%);width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,#fbe6b8,#d7a95f 50%,#a87633);
+ color:#111;font-weight:900;font-size:76px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.sub{position:absolute;left:60px;right:60px;bottom:330px;text-align:center;font-weight:700;font-size:50px;line-height:1.2;color:#fff;
+ background:rgba(0,0,0,.55);border-radius:28px;padding:18px 26px 22px;backdrop-filter:blur(4px)}
+.wm{position:absolute;left:36px;top:36px;width:150px;height:150px;border-radius:50%}
+.checks{position:absolute;left:0;right:0;top:620px;display:flex;flex-direction:column;align-items:center;gap:22px}
+.checks div{background:rgba(0,0,0,.6);color:#fff;font-weight:800;font-size:58px;border-radius:24px;padding:10px 34px 16px;border:3px solid #d7a95f}
+.checks b{color:#2fd65a}
+.cta{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center}
+.btn{display:flex;align-items:center;gap:20px;border-radius:999px;font-weight:900;font-size:62px;padding:30px 70px 36px;margin-top:34px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.flash{position:absolute;inset:0;background:#fff;opacity:0}
+.tag{position:absolute;left:50%;transform:translateX(-50%);font-weight:900;font-size:46px;padding:8px 30px 12px;border-radius:18px;color:#111}
+</style></head><body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<img class="wm" id="wm" src="logo.svg">
+<div class="step" id="step"></div>
+<div class="top" id="top"></div>
+<div class="checks" id="checks"></div>
+<div class="sub" id="sub"></div>
+<div class="cta" id="cta" style="opacity:0">
+ <img src="logo.svg" id="biglogo" style="width:560px;height:560px;margin-top:250px">
+ <div class="btn" id="b1" style="background:#ff2d55;color:#fff">🔔 ЖАЗЫЛЫҢЫЗ</div>
+ <div class="btn" id="b2" style="background:#fff;color:#ff2d55">❤️ ЛАЙК БАСЫҢЫЗ</div>
+ <div class="btn" id="b3" style="background:linear-gradient(135deg,#fbe6b8,#d7a95f 50%,#a87633);color:#111">КЕНЕНИРЭЭК 👇</div>
+</div>
+<div class="tag" id="tagB" style="top:1230px;left:27%;background:#ff3b3b;color:#fff">МУРУН</div>
+<div class="tag" id="tagA" style="top:1230px;left:73%;background:#2fd65a">КИЙИН</div>
+<div class="flash" id="flash"></div>
+<script src="data.js"></script>
+<script>
+const T=window.TL,S=T.scenes,W=1080,H=1920,c=document.getElementById('c'),g=c.getContext('2d'),$=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),prog=(t,a,b)=>clamp((t-a)/(b-a)),eo=x=>1-Math.pow(1-x,3),back=x=>{const k=2.2;return 1+(k+1)*Math.pow(x-1,3)+k*Math.pow(x-1,2)};
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+const IM={};const load=s=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=s;});
+// captions per scene
+const TOP=[`<span class="g">КАРАП ТУРУҢУЗ!</span><br>ЭСКИ ПОЛ ➜ 1 КҮНДӨ ЖАҢЫ`,`<span class="r">ЭСКИ ПОЛ?</span>`,`<span class="r">СУУ ТИЙСЕ —<br>БҮТТҮ!</span>`,`ЧЕЧИМ —<br><span class="g">КУЮЛМА ПОЛ!</span>`,
+ `НЕГИЗДИ<br>ТАЗАЛАЙБЫЗ`,`ГРУНТ<br>СҮРТӨБҮЗ`,`АРАЛАШМАНЫ<br>КУЯБЫЗ`,`АБАСЫН<br>ЧЫГАРАБЫЗ`,`<span class="g">30 ЖЫЛ</span><br>КЫЗМАТ`,`<span class="g">3D</span> ДИЗАЙН`,``];
+function cover(img,zoom,px,py,alpha=1,blur=0){const s=Math.max(W/img.width,H/img.height)*zoom,w=img.width*s,h=img.height*s;
+ g.save();g.globalAlpha=alpha;if(blur)g.filter=`blur(${blur}px)`;g.drawImage(img,(W-w)/2+px,(H-h)/2+py,w,h);g.restore();}
+let last=-1;
+window.renderAt=function(t){
+ let si=S.findIndex(s=>t>=s.t0&&t<s.t1);if(si<0)si=S.length-1;const s=S[si],k=prog(t,s.t0,s.t1);
+ g.fillStyle='#000';g.fillRect(0,0,W,H);
+ const kb=(dir)=>[1.08+.1*k,dir*40*(k-.5),-30*(k-.5)];
+ if(si===0){ // hook: before/after wipe that sweeps back and forth
+  const [z]=kb(1);const A=IM[s.img[0]],B=IM[s.img[1]];cover(A,z,0,0);
+  const x=W*(.5+.38*Math.sin(t*2.2));g.save();g.beginPath();g.rect(x,0,W-x,H);g.clip();cover(B,z,0,0);g.restore();
+  g.save();g.shadowColor='#fff';g.shadowBlur=30;g.fillStyle='#fff';g.fillRect(x-4,0,8,H);g.restore();
+  g.fillStyle='#fff';g.beginPath();g.arc(x,1000,46,0,Math.PI*2);g.fill();g.fillStyle='#111';g.font='900 44px Inter';g.textAlign='center';g.textBaseline='middle';g.fillText('⇆',x,1002);
+ }else if(si===10){const img=IM[s.img[0]];cover(img,1.15,0,0,1,14);g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,W,H);}
+ else{const img=IM[s.img[0]];const [z,px,py]=kb(si%2?1:-1);cover(img,z,px,py);
+  // cross-fade in from the previous scene
+  const fin=prog(t,s.t0,s.t0+.35);if(fin<1&&si>0){const pv=S[si-1];const pimg=IM[pv.img[pv.img.length-1]];g.globalAlpha=1-fin;cover(pimg,1.18,0,0);g.globalAlpha=1;}}
+ // darken top and bottom for text legibility
+ let gr=g.createLinearGradient(0,0,0,700);gr.addColorStop(0,'rgba(0,0,0,.7)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,W,700);
+ gr=g.createLinearGradient(0,1300,0,H);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.75)');g.fillStyle=gr;g.fillRect(0,1300,W,H-1300);
+ // water drops + ripples on the "water damage" scene
+ if(si===2){g.save();g.fillStyle='rgba(20,60,110,.25)';g.fillRect(0,0,W,H);
+  for(let i=0;i<14;i++){const ph=(t*.9+rnd(i))%1;const x=120+rnd(i+3)*840,y0=-40,y1=900+rnd(i+5)*700;const y=y0+(y1-y0)*Math.min(1,ph*1.6);
+   if(ph<.62){g.fillStyle='rgba(190,225,255,.85)';g.beginPath();g.ellipse(x,y,9,16,0,0,Math.PI*2);g.fill();}
+   else{const r=(ph-.62)/.38;g.strokeStyle=`rgba(200,230,255,${.8*(1-r)})`;g.lineWidth=4;g.beginPath();g.ellipse(x,y1,20+120*r,(20+120*r)*.32,0,0,Math.PI*2);g.stroke();}}
+  g.restore();}
+ // red X on problem scenes
+ if(si===1||si===2){const p=back(prog(t,s.t0+.5,s.t0+.8));g.save();g.translate(W-170,560);g.scale(p,p);g.strokeStyle='#ff3b3b';g.lineWidth=26;g.lineCap='round';g.beginPath();g.moveTo(-70,-70);g.lineTo(70,70);g.moveTo(70,-70);g.lineTo(-70,70);g.stroke();g.restore();}
+ // overlays
+ if(si!==last){last=si;$('top').innerHTML=TOP[si];$('sub').textContent=s.text;$('step').textContent=(si>=4&&si<=7)?String(si-3):'';
+  $('checks').innerHTML=si===8?'<div><b>✓</b> ЖЫЛМАКАЙ</div><div><b>✓</b> СУУ ӨТПӨЙТ</div><div><b>✓</b> 1 КҮНДӨ</div>':'';}
+ const tp=back(prog(t,s.t0+.05,s.t0+.4));$('top').style.transform=`scale(${Math.max(.001,tp)})`;$('top').style.opacity=si===10?0:1;
+ $('step').style.display=(si>=4&&si<=7)?'flex':'none';$('step').style.transform=`translateX(-50%) scale(${Math.max(.001,back(prog(t,s.t0,s.t0+.3)))}) rotate(${(1-clamp(prog(t,s.t0,s.t0+.3)))*-90}deg)`;
+ const sp=eo(prog(t,s.t0+.15,s.t0+.4));$('sub').style.opacity=si===10?0:sp;$('sub').style.transform=`translateY(${(1-sp)*30}px)`;
+ [...$('checks').children].forEach((d,i)=>{const p=back(prog(t,s.t0+.6+i*.35,s.t0+.9+i*.35));d.style.transform=`scale(${Math.max(.001,p)})`;});
+ $('tagB').style.opacity=$('tagA').style.opacity=si===0?1:0;
+ $('wm').style.opacity=si===10?0:.95;
+ // CTA
+ const cta=$('cta');cta.style.opacity=si===10?eo(prog(t,s.t0,s.t0+.4)):0;
+ if(si===10){$('biglogo').style.transform=`scale(${Math.max(.001,back(prog(t,s.t0,s.t0+.5)))*(1+.02*Math.sin(t*4))})`;
+  ['b1','b2','b3'].forEach((id,i)=>{const a=s.t0+.5+i*.35;const p=back(prog(t,a,a+.35));const tap=Math.sin(Math.PI*prog(t,a+1.2,a+1.45));$(id).style.transform=`scale(${Math.max(.001,p*(1-.08*tap)*(1+.03*Math.sin(t*6+i)))})`;});}
+ // flash on hook start and on "solution"
+ const fl=Math.max(si===0?1-prog(t,s.t0,s.t0+.35):0,si===3?1-prog(t,s.t0,s.t0+.35):0);$('flash').style.opacity=.7*fl;
+ // grain
+ const im=g.getImageData(0,0,W,H),d=im.data;let sd=(Math.floor(t*24)%48)*7919+5;for(let i=0;i<d.length;i+=16){sd=(sd*16807)%2147483647;const v=(sd%13)-6;for(let j=0;j<16;j+=4){d[i+j]+=v;d[i+j+1]+=v;d[i+j+2]+=v;}}g.putImageData(im,0,0);
+};
+Promise.all([...new Set(S.flatMap(s=>s.img))].map(f=>load(f).then(i=>IM[f]=i))).then(()=>document.fonts.ready).then(()=>{renderAt(0);window.ready=true;});
+</script></body></html>
