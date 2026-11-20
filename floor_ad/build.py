@@ -8,7 +8,7 @@ GAP = 0.45
 scenes = []; t = 0.3
 for i, text in enumerate(L):
     v, sr = sf.read(f'vo/{i}.wav'); v = v.mean(1) if v.ndim > 1 else v
-    d = len(v) / sr; dur = max(d + GAP, 2.3) + (1.6 if i == 10 else 0) + (0.3 if i == 0 else 0)
+    d = len(v) / sr; dur = max(d + GAP, 2.3) + (1.6 if i == len(L) - 1 else 0) + (0.3 if i == 0 else 0)
     scenes.append({'i': i, 't0': round(t, 3), 't1': round(t + dur, 3), 'vo': round(t + .12, 3), 'vd': round(d, 3), 'text': text, 'img': IMG[str(i)]})
     t += dur
 DUR = round(t + .2, 3)
@@ -58,7 +58,7 @@ for s in scenes:
 x = np.arange(int(1.2 * SR)) / SR
 add(sfx, scenes[3]['t0'], np.sin(2 * np.pi * (60 * np.exp(-x * 4) + 32) * x) * np.exp(-x * 2.5) * .9)   # solution impact
 add(sfx, .05, np.sin(2 * np.pi * (60 * np.exp(-x * 4) + 32) * x) * np.exp(-x * 2.5) * .8)               # hook impact
-sub, _ = sf.read('../kids/brand/subscribe_sfx.wav'); add(sfx, scenes[10]['t0'] + .3, sub.mean(1))
+sub, _ = sf.read('../kids/brand/subscribe_sfx.wav'); add(sfx, scenes[-1]['t0'] + .3, sub.mean(1))
 mus /= np.abs(mus).max()
 ve = np.convolve(np.abs(vox), np.ones(2400) / 2400, 'same'); gdk = np.clip(ve / (np.percentile(ve[ve > 1e-4], 95) + 1e-9), 0, 1)
 mus = mus * (1 - .5 * gdk); mus = mus - bp(mus, 1500, 5000) * .4 * gdk

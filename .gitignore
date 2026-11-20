@@ -24,3 +24,5 @@ kids/ep1/lines_v1.json
 bot_menu/gen/couple_10[023].png
 floor_ad/video_silent.mp4
 floor_ad/*.wav
+floor_ad/vo_flat/
+floor_ad/vo_3d_removed.wav
