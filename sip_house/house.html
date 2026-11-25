@@ -1,0 +1,124 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}html,body{width:1920px;height:1080px;overflow:hidden;background:#cfe6f7;font-family:"Inter Display",Inter,sans-serif}
+canvas{position:absolute;inset:0}
+.cap{position:absolute;left:70px;bottom:70px;color:#fff;font-weight:800;font-size:64px;text-shadow:0 4px 18px rgba(0,0,0,.55);letter-spacing:-.5px}
+.cap small{display:block;font-weight:600;font-size:32px;opacity:.9;margin-top:6px}
+.step{position:absolute;left:70px;top:60px;background:rgba(0,0,0,.55);color:#fff;font-weight:700;font-size:34px;border-radius:16px;padding:10px 24px 14px;backdrop-filter:blur(6px)}
+.step b{color:#ffcf5a}
+.lbl{position:absolute;font-weight:800;font-size:30px;color:#1d2330;background:rgba(255,255,255,.92);border-radius:14px;padding:8px 18px 12px;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap}
+.lbl i{font-style:normal;font-weight:600;color:#5a6478;font-size:24px;display:block}
+</style></head><body>
+<canvas id="gl" width="1920" height="1080"></canvas>
+<div class="step" id="step"></div>
+<div class="cap" id="cap"></div>
+<div id="labels"></div>
+<script type="importmap">{"imports":{"three":"../kids/node_modules/three/build/three.module.js","three/addons/":"../kids/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+const MODE=new URLSearchParams(location.search).get('mode')||'build';   // build | hero | detail
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),prog=(t,a,b)=>clamp((t-a)/(b-a)),eo=x=>1-Math.pow(1-x,3),eio=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,lerp=(a,b,x)=>a+(b-a)*x;
+const rnd=i=>{const s=Math.sin(i*127.1+311.7)*43758.5453;return s-Math.floor(s)};
+const r=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,preserveDrawingBuffer:true});
+r.setPixelRatio(1);r.setSize(1920,1080,false);r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.05;
+r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();const pm=new THREE.PMREMGenerator(r);scene.environment=pm.fromScene(new RoomEnvironment(),.04).texture;
+const cam=new THREE.PerspectiveCamera(34,1920/1080,.1,500);
+// sky
+const ctex=(w,h,fn,rep)=>{const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(...rep);}t.anisotropy=8;return t;};
+scene.background=ctex(2,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#5aa6e0');gr.addColorStop(.55,'#bfe0f5');gr.addColorStop(1,'#f3e7d3');g.fillStyle=gr;g.fillRect(0,0,w,h);});
+scene.fog=new THREE.Fog('#dfe9f0',45,140);
+const sun=new THREE.DirectionalLight('#fff2dc',3.0);sun.position.set(18,22,12);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:80});sun.shadow.bias=-.0004;sun.shadow.normalBias=.02;scene.add(sun);
+scene.add(new THREE.HemisphereLight('#cfe6ff','#7a8a5a',.9));
+// ---------- procedural textures ----------
+const osbTex=ctex(512,512,(g,w,h)=>{g.fillStyle='#c79a5b';g.fillRect(0,0,w,h);for(let i=0;i<900;i++){const x=rnd(i)*w,y=rnd(i+1)*h,l=20+rnd(i+2)*60,a=rnd(i+3)*Math.PI;const c=['#b5854a','#d8ac6a','#a9773f','#e0b97b','#9c6c37'][i%5];
+ g.save();g.translate(x,y);g.rotate(a);g.fillStyle=c;g.globalAlpha=.75;g.fillRect(-l/2,-6,l,12);g.restore();}},[2,2]);
+const foamTex=ctex(256,256,(g,w,h)=>{g.fillStyle='#f4f6f2';g.fillRect(0,0,w,h);for(let i=0;i<1500;i++){g.fillStyle=`rgba(200,205,195,${rnd(i)*.5})`;g.beginPath();g.arc(rnd(i+1)*w,rnd(i+2)*h,1+rnd(i+3)*3,0,7);g.fill();}},[1,1]);
+const sidingTex=ctex(512,512,(g,w,h)=>{for(let y=0;y<h;y+=32){g.fillStyle=(y/32)%2?'#eef0ec':'#e6e9e4';g.fillRect(0,y,w,32);g.fillStyle='rgba(0,0,0,.13)';g.fillRect(0,y+28,w,4);}},[3,3]);
+const woodTex=ctex(512,128,(g,w,h)=>{g.fillStyle='#8a5a33';g.fillRect(0,0,w,h);for(let i=0;i<60;i++){g.strokeStyle=`rgba(${60+rnd(i)*40},${35+rnd(i)*20},20,.35)`;g.lineWidth=1+rnd(i+1)*2;g.beginPath();const y=rnd(i+2)*h;g.moveTo(0,y);g.bezierCurveTo(w*.3,y+8*rnd(i+3)-4,w*.7,y-6,w,y+4*rnd(i+4));g.stroke();}},[2,6]);
+const roofTex=ctex(256,256,(g,w,h)=>{g.fillStyle='#3a3f47';g.fillRect(0,0,w,h);for(let x=0;x<w;x+=32){g.fillStyle='#4c525b';g.fillRect(x,0,6,h);g.fillStyle='#2b2f35';g.fillRect(x+6,0,3,h);}},[6,4]);
+const grassTex=ctex(512,512,(g,w,h)=>{g.fillStyle='#6fa44a';g.fillRect(0,0,w,h);for(let i=0;i<6000;i++){g.fillStyle=['#5f9640','#7cb352','#87bd5b','#558a38'][i%4];g.fillRect(rnd(i)*w,rnd(i+1)*h,2,3+rnd(i+2)*4);}},[30,30]);
+const M={osb:new THREE.MeshStandardMaterial({map:osbTex,roughness:.85}),foam:new THREE.MeshStandardMaterial({map:foamTex,roughness:.95}),
+ siding:new THREE.MeshStandardMaterial({map:sidingTex,roughness:.6,transparent:true}),wood:new THREE.MeshStandardMaterial({map:woodTex,roughness:.55,transparent:true}),
+ roof:new THREE.MeshStandardMaterial({map:roofTex,roughness:.45,metalness:.35,transparent:true}),glass:new THREE.MeshPhysicalMaterial({color:'#9fc8e6',roughness:.05,metalness:0,transmission:.0,opacity:.55,transparent:true,envMapIntensity:1.6}),
+ frame:new THREE.MeshStandardMaterial({color:'#2c3036',roughness:.4,transparent:true}),concrete:new THREE.MeshStandardMaterial({color:'#b9b6ae',roughness:.9}),
+ grass:new THREE.MeshStandardMaterial({map:grassTex,roughness:1}),path:new THREE.MeshStandardMaterial({color:'#cfc6b4',roughness:.9})};
+// ---------- ground ----------
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(260,260),M.grass);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const walk=new THREE.Mesh(new THREE.BoxGeometry(1.6,.04,7),M.path);walk.position.set(1.2,.02,8.6);walk.receiveShadow=true;scene.add(walk);
+const TREES=[];function tree(x,z,s){const g=new THREE.Group();TREES.push(g);const tr=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,2),new THREE.MeshStandardMaterial({color:'#6b4a2b'}));tr.position.y=1;g.add(tr);
+ [[0,2.6,1.1],[-.5,2.2,.8],[.5,2.3,.85],[0,3.2,.8]].forEach(([a,b,rr])=>{const m=new THREE.Mesh(new THREE.IcosahedronGeometry(rr,2),new THREE.MeshStandardMaterial({color:'#4d8a36',roughness:.9,flatShading:true}));m.position.set(a,b,0);m.castShadow=true;g.add(m);});
+ g.position.set(x,0,z);g.scale.setScalar(s);scene.add(g);}
+[[-12,-6,1.3],[-14,3,1.1],[13,-7,1.4],[15,2,1.0],[-9,-12,1.5],[10,-13,1.2],[-18,-2,1.2],[19,-3,1.3]].forEach(a=>tree(...a));
+// ---------- house: 10 x 8 m, walls 2.8 m, SIP 1.25 m panels, 174 mm thick ----------
+const L=10,Wd=8,H=2.8,T=.174,PW=1.25;
+const house=new THREE.Group();scene.add(house);
+const slab=new THREE.Mesh(new THREE.BoxGeometry(L+.6,.4,Wd+.6),M.concrete);slab.position.y=.2;slab.castShadow=slab.receiveShadow=true;house.add(slab);
+// openings per wall: [panelIndex, type]  type: 'w' window (sill .9, head 2.2), 'd' door (0..2.2), 'big' (sill .3)
+const walls=[{name:'front',len:L,pos:(u)=>[u-L/2,Wd/2-T/2],rotY:0,open:{1:'w',2:'w',4:'d',6:'big',7:'big'}},
+ {name:'right',len:Wd,pos:(u)=>[L/2-T/2,Wd/2-u],rotY:Math.PI/2,open:{2:'w',3:'w'}},
+ {name:'back',len:L,pos:(u)=>[L/2-u,-Wd/2+T/2],rotY:Math.PI,open:{3:'w',5:'w'}},
+ {name:'left',len:Wd,pos:(u)=>[-L/2+T/2,-Wd/2+u],rotY:-Math.PI/2,open:{2:'w',4:'w'}}];
+function sip(w,h,parent){const g=new THREE.Group();const o=.012,f=T-2*o;
+ const a=new THREE.Mesh(new THREE.BoxGeometry(w-.004,h,o),M.osb);a.position.z=f/2+o/2;const b=a.clone();b.position.z=-f/2-o/2;
+ const c=new THREE.Mesh(new THREE.BoxGeometry(w-.004,h,f),M.foam);[a,b,c].forEach(m=>{m.castShadow=m.receiveShadow=true;g.add(m);});parent.add(g);return g;}
+const panels=[],openings=[],cladPieces=[];
+walls.forEach(wl=>{const n=Math.round(wl.len/PW);for(let k=0;k<n;k++){const u=(k+.5)*wl.len/n,w=wl.len/n,[x,z]=wl.pos(u);const ty=wl.open[k];
+  const add=(y0,y1)=>{const grp=new THREE.Group();grp.position.set(x,.4+(y0+y1)/2,z);grp.rotation.y=wl.rotY;sip(w,y1-y0,grp);house.add(grp);panels.push({g:grp,home:grp.position.clone(),wall:wl.name});cladPieces.push({x,z,rotY:wl.rotY,w,y0,y1});};
+  if(!ty)add(0,H);else{const s=ty==='w'?.9:ty==='big'?.3:0,hd=2.2;if(s>0)add(0,s);add(hd,H);openings.push({x,z,rotY:wl.rotY,w,s,hd,ty});}}});
+// gable triangles (SIP) on left/right walls
+function gable(side){const sh=new THREE.Shape();sh.moveTo(-Wd/2,0);sh.lineTo(Wd/2,0);sh.lineTo(0,2.2);sh.lineTo(-Wd/2,0);
+ const g=new THREE.Group();const e1=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:T,bevelEnabled:false}),M.osb);e1.position.z=-T/2;e1.castShadow=true;g.add(e1);
+ g.rotation.y=Math.PI/2;g.position.set(side*(L/2-T/2),.4+H,0);house.add(g);panels.push({g,home:g.position.clone(),wall:'gable'});return g;}
+gable(1);gable(-1);
+// roof: two SIP slabs + metal roofing
+const pitch=Math.atan2(2.2,Wd/2),rl=Math.hypot(Wd/2,2.2)+.6;const roofParts=[],finish=[];
+[1,-1].forEach(sd=>{const g=new THREE.Group();const s=sip(L+.8,rl,g);s.rotation.x=Math.PI/2;
+ const rf=new THREE.Mesh(new THREE.BoxGeometry(L+.9,.03,rl+.05),M.roof);rf.position.y=T/2+.02;rf.castShadow=true;g.add(rf);finish.push({m:rf,type:'roof'});
+ g.position.set(0,.4+H+1.1,sd*(Wd/4));g.rotation.x=sd*pitch;house.add(g);roofParts.push({g,home:g.position.clone(),rf});});
+// cladding + windows + door + terrace (finish stage)
+cladPieces.forEach(c=>{const m=new THREE.Mesh(new THREE.BoxGeometry(c.w+.002,c.y1-c.y0,.03),M.siding.clone());const off=new THREE.Vector3(0,0,T/2+.02).applyAxisAngle(new THREE.Vector3(0,1,0),c.rotY);
+ m.position.set(c.x+off.x,.4+(c.y0+c.y1)/2,c.z+off.z);m.rotation.y=c.rotY;house.add(m);finish.push({m,type:'clad'});});
+[1,-1].forEach(side=>{const sh=new THREE.Shape();sh.moveTo(-Wd/2,0);sh.lineTo(Wd/2,0);sh.lineTo(0,2.2);sh.lineTo(-Wd/2,0);
+ const m=new THREE.Mesh(new THREE.ExtrudeGeometry(sh,{depth:.03,bevelEnabled:false}),M.wood.clone());m.rotation.y=Math.PI/2;m.position.set(side*(L/2+.03),.4+H,side>0?0:0);if(side<0)m.position.x=-L/2-.06;m.castShadow=true;house.add(m);finish.push({m,type:'clad'});});
+openings.forEach(o=>{const h=o.hd-o.s;const g=new THREE.Group();g.position.set(o.x,.4+o.s+h/2,o.z);g.rotation.y=o.rotY;house.add(g);
+ const fr=new THREE.Mesh(new THREE.BoxGeometry(o.w-.02,h,T+.06),M.frame.clone());const inner=new THREE.Mesh(new THREE.BoxGeometry(o.w-.16,h-.14,T+.08),M.frame);
+ const holeFill=o.ty==='d'?new THREE.Mesh(new THREE.BoxGeometry(o.w-.16,h-.12,.06),M.wood.clone()):new THREE.Mesh(new THREE.BoxGeometry(o.w-.16,h-.14,.03),M.glass.clone());
+ g.add(fr);g.add(holeFill);fr.castShadow=true;finish.push({m:fr,type:'win'},{m:holeFill,type:'win'});
+ // cut the frame: use a thinner surround made of 4 bars instead of a solid box
+ g.remove(fr);[[0,h/2-.05,o.w-.02,.1],[0,-h/2+.05,o.w-.02,.1],[o.w/2-.06,0,.1,h],[-o.w/2+.06,0,.1,h]].forEach(([x,y,w,hh])=>{const b=new THREE.Mesh(new THREE.BoxGeometry(w,hh,T+.06),M.frame.clone());b.position.set(x,y,0);b.castShadow=true;g.add(b);finish.push({m:b,type:'win'});});});
+const deck=new THREE.Mesh(new THREE.BoxGeometry(4.2,.12,2.2),M.wood.clone());deck.position.set(2.6,.42,Wd/2+1.1);deck.castShadow=deck.receiveShadow=true;house.add(deck);finish.push({m:deck,type:'deck'});
+house.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+// ---------- detail mode: exploded SIP panel ----------
+const det=new THREE.Group();scene.add(det);det.visible=false;
+{const w=2.4,h=1.6;const o=.06,f=.5;const mk=(mat,d)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.castShadow=m.receiveShadow=true;det.add(m);return m;};
+ det.userData={a:mk(M.osb,o),c:mk(M.foam,f),b:mk(M.osb,o)};det.position.set(-1.3,1.6,0);det.rotation.set(-.15,.65,0);}
+// ---------- animation ----------
+const ORDER=panels.map((p,i)=>i);   // walls already ordered front,right,back,left,gables
+const B0=1.0,B1=6.6;const per=(B1-B0)/panels.length;
+const $=id=>document.getElementById(id);
+function setFinish(k){finish.forEach(f=>{f.m.visible=k>0.001;f.m.material.opacity=k;});}
+window.renderAt=function(t){
+ if(MODE==='detail'){house.visible=false;det.visible=true;TREES.forEach(t=>t.visible=false);walk.visible=false;const k=eio(prog(t,0,1.5));const {a,b,c}=det.userData;a.position.z=lerp(.28,.75,k);b.position.z=lerp(-.28,-.75,k);c.position.z=0;
+  det.rotation.y=.65+Math.sin(t*.5)*.15;cam.position.set(0,2.4,6.4);cam.lookAt(0,1.5,0);r.render(scene,cam);
+  const sw=(c)=>`<span style="display:inline-block;width:26px;height:26px;border-radius:6px;background:${c};vertical-align:-4px;margin-right:12px"></span>`;
+  const op=eo(prog(t,1.2,1.8));$('labels').innerHTML=[['#c79a5b','OSB-3 плита (снаружи)','прочность и жёсткость • 12 мм',300],['#f4f6f2','Утеплитель','пенополистирол • 150 мм • держит тепло',470],['#c79a5b','OSB-3 плита (внутри)','ровная основа под отделку • 12 мм',640]]
+   .map(([c,tt,sub,y])=>`<div class="lbl" style="left:1310px;top:${y}px;opacity:${op}">${sw(c)}${tt}<i style="margin-left:38px">${sub}</i></div>`).join('');
+  $('cap').innerHTML='SIP-панель<small>OSB + утеплитель + OSB = 174 мм тепла и прочности</small>';$('step').style.display='none';return;}
+ // build timeline
+ slab.scale.y=Math.max(.001,eo(prog(t,0,.8)));slab.position.y=.2*slab.scale.y;
+ panels.forEach((p,i)=>{const t0=B0+i*per,k=eo(prog(t,t0,t0+.7));p.g.visible=t>=t0;p.g.position.set(p.home.x,p.home.y+(1-k)*6,p.home.z);p.g.rotation.z=(1-k)*.25*(i%2?1:-1);});
+ roofParts.forEach((p,i)=>{const t0=6.8+i*.5,k=eo(prog(t,t0,t0+.9));p.g.visible=t>=t0;p.g.position.set(p.home.x,p.home.y+(1-k)*7,p.home.z+(1-k)*(i?-3:3));});
+ const fk=MODE==='hero'?1:eio(prog(t,8.6,10.2));setFinish(fk);roofParts.forEach(p=>{p.rf.visible=fk>0;p.rf.material.opacity=fk;});
+ // camera orbit
+ const a=MODE==='hero'?.62:lerp(1.15,.25,eio(prog(t,0,15)))+Math.sin(t*.15)*.05;const rad=MODE==='hero'?19:lerp(24,20,eio(prog(t,0,15)));
+ cam.position.set(Math.sin(a)*rad,MODE==='hero'?4.2:lerp(11,4.6,eio(prog(t,0,12))),Math.cos(a)*rad);cam.lookAt(0,1.9,0);
+ r.render(scene,cam);
+ const steps=[[0,'<b>1.</b> Фундамент — лёгкая монолитная плита'],[B0,'<b>2.</b> Монтаж SIP-панелей — стены за несколько дней'],[6.8,'<b>3.</b> Крыша из SIP-панелей'],[8.6,'<b>4.</b> Отделка, окна, двери'],[10.6,'<b>Готово!</b> Тёплый дом — быстро и выгодно']];
+ let st='';for(const [tt,s] of steps)if(t>=tt)st=s;$('step').innerHTML=st;$('step').style.display=MODE==='hero'?'none':'block';
+ $('cap').innerHTML=(MODE==='hero'||t>10.6)?'Дом из SIP-панелей<small>10 × 8 м • ~80 м² • тёплый, быстрый, выгодный</small>':'';$('cap').style.opacity=MODE==='hero'?1:eo(prog(t,10.6,11.3));
+ $('labels').innerHTML='';
+};
+document.fonts.ready.then(()=>{renderAt(MODE==='build'?0:15);window.ready=true;});
+</script></body></html>
