@@ -42,6 +42,11 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f-body);overflow:hid
 .modes{display:flex;padding:4px;gap:4px;max-width:100%}
 .modes button{flex:1 1 auto;min-width:0;border:0;background:transparent;color:var(--fg);font:600 .9rem/1.1 var(--f-body);padding:10px 14px;border-radius:12px;cursor:pointer;white-space:nowrap}
 .modes button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.finish{display:flex;align-items:center;gap:10px;padding:8px 12px;max-width:100%;flex-wrap:wrap;justify-content:center}
+.finish .lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+#facade{display:flex;gap:6px}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--panel-solid);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--accent)}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #dims{position:fixed;inset:0;pointer-events:none}
 .dim{position:absolute;transform:translate(-50%,-50%);background:var(--panel-solid);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-size:.72rem;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;box-shadow:0 3px 10px rgba(0,0,0,.15)}
@@ -72,6 +77,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <div class="bottom">
     <div class="hint" id="hint">Манжа же чычкан менен айлантыңыз · чымчып жакындатыңыз · бөлүктү басып маалымат алыңыз</div>
     <div class="card info" id="info" hidden><div><b id="info-t"></b><span id="info-d"></span></div><button id="info-x" aria-label="Жабуу">×</button></div>
+    <div class="card finish" id="finish"><span class="lbl">Фасад</span><span id="facade"></span></div>
     <nav class="card modes" aria-label="Көрүнүш">
       <button id="m-house" aria-pressed="true">Даяр үй</button>
       <button id="m-frame" aria-pressed="false">Темир каркас</button>
@@ -106,19 +112,25 @@ const hemi=new THREE.HemisphereLight('#d4e8ff','#7d8a62',.9);scene.add(hemi);
 // ---------- textures ----------
 const grassTex=ctex(512,512,(g,w,h)=>{g.fillStyle='#6c9f48';g.fillRect(0,0,w,h);for(let i=0;i<6000;i++){g.fillStyle=['#5f9640','#7cb352','#87bd5b','#558a38'][i%4];g.fillRect(rnd(i)*w,rnd(i+1)*h,2,3+rnd(i+2)*4);}},[40,40]);
 const paveTex=ctex(512,512,(g,w,h)=>{g.fillStyle='#8d8f93';g.fillRect(0,0,w,h);for(let y=0;y<h;y+=64)for(let x=0;x<w;x+=128){const o=(y/64)%2?64:0;g.fillStyle=['#b9bbbe','#aeb0b4','#c3c4c6','#a7a9ad'][((x+y)/64|0)%4];g.fillRect(x+o+2,y+2,124,60);g.fillRect(x+o-126,y+2,124,60);}},[6,6]);
-const woodTex=ctex(512,512,(g,w,h)=>{for(let x=0;x<w;x+=32){const k=x/32;g.fillStyle=['#a8703c','#9b6534','#b47b45','#93602f'][k%4];g.fillRect(x,0,32,h);
+const woodTex=ctex(512,512,(g,w,h)=>{for(let x=0;x<w;x+=32){const k=x/32;g.fillStyle=['#5e3d26','#553620','#68452c','#4e321e'][k%4];g.fillRect(x,0,32,h);
  for(let i=0;i<8;i++){g.strokeStyle='rgba(60,32,12,.25)';g.beginPath();const xx=x+3+rnd(k*17+i)*26;g.moveTo(xx,0);g.bezierCurveTo(xx+3,h*.3,xx-3,h*.6,xx+1,h);g.stroke();}g.fillStyle='rgba(30,15,5,.35)';g.fillRect(x+30,0,2,h);}},[1,1]);
 const concTex=ctex(256,256,(g,w,h)=>{g.fillStyle='#bdbab3';g.fillRect(0,0,w,h);for(let i=0;i<2500;i++){g.fillStyle=`rgba(${90+rnd(i)*80|0},${90+rnd(i)*80|0},${88+rnd(i)*70|0},.35)`;g.fillRect(rnd(i+1)*w,rnd(i+2)*h,1+rnd(i+3)*2,1+rnd(i+4)*2);}});
 const gravTex=ctex(256,256,(g,w,h)=>{g.fillStyle='#7c776d';g.fillRect(0,0,w,h);for(let i=0;i<500;i++){g.fillStyle=['#a49d90','#8c857a','#c2bcb1','#6d675d'][i%4];g.beginPath();g.ellipse(rnd(i)*w,rnd(i+1)*h,4+rnd(i+2)*9,3+rnd(i+3)*7,rnd(i+4)*3,0,7);g.fill();}});
 const soilTex=ctex(256,256,(g,w,h)=>{g.fillStyle='#8a6a48';g.fillRect(0,0,w,h);for(let i=0;i<3000;i++){g.fillStyle=['#7a5c3d','#9a7a55','#6b4f33'][i%3];g.fillRect(rnd(i)*w,rnd(i+1)*h,2,2);}},[4,1]);
-const panelTex=ctex(512,512,(g,w,h)=>{g.fillStyle='#f1f2f0';g.fillRect(0,0,w,h);g.fillStyle='rgba(0,0,0,.08)';for(let y=0;y<h;y+=128)g.fillRect(0,y,w,3);for(let x=0;x<w;x+=256)g.fillRect(x,0,3,h);},[2,2]);
+const plank=(c,lines)=>ctex(512,512,(g,w,h)=>{for(let y=0;y<h;y+=32){const k=y/32;g.fillStyle=c[k%4];g.fillRect(0,y,w,32);
+ for(let i=0;i<9;i++){g.strokeStyle=lines;g.lineWidth=1;g.beginPath();const yy=y+3+rnd(k*31+i)*24;g.moveTo(0,yy);g.bezierCurveTo(w*.3,yy+3,w*.6,yy-3,w,yy+1);g.stroke();}
+ g.fillStyle='rgba(30,15,5,.35)';g.fillRect(0,y+29,w,3);}},[2,3]);
+const FAC={pine:{name:'Ачык жыгач',ui:'#d9b27a',map:plank(['#dcb47c','#d2a96f','#e2bd88','#cfa56a'],'rgba(120,80,40,.22)')},
+ honey:{name:'Бал түстүү',ui:'#b9783c',map:plank(['#bd7c40','#b07038','#c58548','#a86a33'],'rgba(70,35,10,.25)')},
+ walnut:{name:'Жаңгак',ui:'#6e4a30',map:plank(['#71492e','#663f27','#7a5235','#5f3b24'],'rgba(25,12,4,.3)')},
+ white:{name:'Ак панель',ui:'#f1f2f0',map:ctex(512,512,(g,w,h)=>{g.fillStyle='#f1f2f0';g.fillRect(0,0,w,h);g.fillStyle='rgba(0,0,0,.08)';for(let y=0;y<h;y+=128)g.fillRect(0,y,w,3);for(let x=0;x<w;x+=256)g.fillRect(x,0,3,h);},[2,2])}};
 
 const std=(o)=>new THREE.MeshStandardMaterial(o);
 const M={steel:std({color:'#3b4350',roughness:.45,metalness:.65}),beam:std({color:'#4a5463',roughness:.45,metalness:.6}),
  plate:std({color:'#5b6574',roughness:.4,metalness:.7}),bolt:std({color:'#b8bec6',roughness:.3,metalness:.9}),
  conc:std({map:concTex,roughness:.9,transparent:true}),grav:std({map:gravTex,roughness:1}),rebar:std({color:'#7a4b2a',roughness:.6,metalness:.5}),
  grass:std({map:grassTex,roughness:1,transparent:true}),pave:std({map:paveTex,roughness:.85}),soil:std({map:soilTex,roughness:1}),
- white:std({map:panelTex,roughness:.55}),dark:std({color:'#2f343b',roughness:.5,metalness:.2}),wood:std({map:woodTex,roughness:.6}),
+ white:std({map:FAC.honey.map,roughness:.7}),dark:std({color:'#2f343b',roughness:.5,metalness:.2}),wood:std({map:woodTex,roughness:.6}),
  frame:std({color:'#23272d',roughness:.35,metalness:.4}),glass:new THREE.MeshPhysicalMaterial({color:'#9ec3dd',roughness:.04,opacity:.42,transparent:true,envMapIntensity:1.8}),
  rail:new THREE.MeshPhysicalMaterial({color:'#cfe6f3',roughness:.05,opacity:.28,transparent:true}),
  interior:std({color:'#e8dccb',roughness:.9,emissive:'#ffb866',emissiveIntensity:0}),
@@ -147,7 +159,7 @@ const I={col:['Темир мамы','200×200×8 мм · 12 даана · бий
  beamU:['Жогорку балка','Квадраттык труба 100×50×4 мм · ≈ 24 м'],plate:['База плитасы','250×250×10 мм · ар бир мамыда'],
  bolt:['Анкер-болт M16','Ар бир мамыга 4 даана · жалпы 48 даана'],foot:['Бетон таман','800×800×500 мм · бетон B25 (M350) · ≈ 6,0 м³'],
  grav:['Чопмо таш катмары','100 мм · таман астында'],rebar:['Арматура','Ø12 AIII (12 даана) + Ø8 AI, кадам 200 мм'],brace:['Байланыш (крест)','Каркастын бекемдиги үчүн'],
- wall:['Сырткы дубал','Фасаддык панелдер · жылуулоо ичинде'],glass:['Панорамалык терезе','Эки кабаттуу айнек пакет · кара алюминий рама'],
+ wall:['Сырткы дубал','Жыгач фасад (имитация бруса) · жылуулоо ичинде'],glass:['Панорамалык терезе','Эки кабаттуу айнек пакет · кара алюминий рама'],
  roof:['Жалпак чатыр','Чыгып турган карниз · LED жарыктар'],balcony:['Балкон','Айнек тосмо · 2-кабат'],wood:['Жыгач панель','Фасаддагы жыгач декор']};
 // footings
 const fGroup=[];
@@ -246,7 +258,7 @@ function fly(v){const d=VIEWS[v];ctl.maxPolarAngle=d.pol;if(reduce){cam.position
  tween={t:0,p0:cam.position.clone(),p1:camPos(d),q0:ctl.target.clone(),q1:new THREE.Vector3(...d.tgt)};}
 cam.position.copy(camPos(VIEWS.house));
 
-const LEG={house:'<b>Заманбап 2 кабаттуу коттедж:</b> панорамалык терезелер, айнек тосмолуу балкон, жалпак чатыр жана жыгач декор.',
+const LEG={house:'<b>Жыгач фасаддуу 2 кабаттуу коттедж:</b> панорамалык терезелер, айнек тосмолуу балкон, жалпак чатыр. Фасаддын түсүн төмөндөн тандаңыз.',
  frame:'<b>Темир каркас:</b> мамы 200×200×8 мм — 12 даана, балка 100×50×4 мм, кабаттын бийиктиги 2,7 м, крест байланыштар.',
  found:'<b>Пайдубал:</b> бетон таман 800×800×500 мм (B25), астында чопмо таш 100 мм, анкер-болт M16 × 4, база плитасы 250×250×10 мм.'};
 let mode='house';
@@ -256,9 +268,11 @@ function setMode(m){mode=m;['house','frame','found'].forEach(k=>$('m-'+k).setAtt
  M.conc.opacity=m==='found'?.45:1;M.conc.depthWrite=m!=='found';
  fGroup.forEach(g=>g.children.forEach(c=>{if(c.userData.cage)c.visible=m==='found';}));
  dimEls.forEach((e,i)=>e.hidden=m==='house'||(m==='found'&&i>=nD));vdim.visible=m!=='found';fdimEls.forEach(e=>e.hidden=m!=='found');
- $('legend').innerHTML=LEG[m];$('info').hidden=true;fly(m);}
+ $('legend').innerHTML=LEG[m];$('finish').hidden=m!=='house';$('info').hidden=true;fly(m);}
 ['house','frame','found'].forEach(k=>$('m-'+k).onclick=()=>setMode(k));
 
+$('facade').innerHTML=Object.entries(FAC).map(([k,v])=>`<button class="dot" data-k="${k}" aria-pressed="${k==='honey'}" title="${v.name}" aria-label="${v.name}" style="background:${v.ui}"></button>`).join('');
+$('facade').onclick=e=>{const b=e.target.closest('button');if(!b)return;$('facade').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));M.white.map=FAC[b.dataset.k].map;M.white.needsUpdate=true;};
 let night=false;
 function setNight(n){night=n;$('night').setAttribute('aria-pressed',n);scene.background=n?SKY_EVE:SKY_DAY;scene.fog.color.set(n?'#6a6f8a':'#dde8f0');
  sun.intensity=n?.25:3.0;sun.color.set(n?'#ffb47a':'#fff3df');sun.position.set(n?-18:14,n?6:20,n?10:16);hemi.intensity=n?.22:.9;scene.environment=envTex;r.toneMappingExposure=n?1.15:1.0;
