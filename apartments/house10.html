@@ -266,14 +266,50 @@ for(const [y,hh] of[[F1+.07,.14],[F2,.26],[TOP-.06,.12]]){box(GRID,2*XO+.2,hh,.1
 // window head bands (thin) on each floor
 for(const y0 of[F1,F2])box(GRID,2*XO+.2,.06,.08,0,y0+2.62,ZF+.05,M.grid);
 // parapet + roof
-wallRun(ROOF,'x',ZF-.08,-XO-.05,-2.6,TOP-.1,TOP+.45,.34,M.grid);wallRun(ROOF,'x',ZF-.08,2.6,XO+.05,TOP-.1,TOP+.45,.34,M.grid);
-wallRun(ROOF,'x',ZB+.08,-XO-.05,XO+.05,TOP-.1,TOP+.45,.34,M.grid);for(const sx of[-1,1])wallRun(ROOF,'z',sx*(XO-.08),ZB,ZF,TOP-.1,TOP+.45,.34,M.grid);
-box(ROOF,2*XO,.08,ZF-ZB,0,TOP+.47,(ZF+ZB)/2,M.dark).scale.set(1.004,1,1.004);
-box(ROOF,2*XO-.5,.3,ZF-ZB-.5,0,TOP+.15,(ZF+ZB)/2,M.roof);
-wallRun(ROOF,'x',7.64,-2.7,2.7,TOP-.1,TOP+.75,.34,M.grid);for(const sx of[-1,1])wallRun(ROOF,'z',sx*2.64,ZF-.1,7.8,TOP-.1,TOP+.75,.34,M.grid);
-box(ROOF,5.45,.08,.7,0,TOP+.79,7.45,M.dark);
-const vent=box(ROOF,3.2,1.3,1.8,0,TOP+.95,4.0,F('#5b5d60'));for(let k=0;k<9;k++)box(ROOF,3.22,.03,.02,0,TOP+.5+k*.13,4.91,M.dark);
-box(ROOF,.12,1.6,.12,-1.9,TOP+1.1,4.6,M.rail);box(ROOF,.12,1.6,.12,1.9,TOP+1.1,4.6,M.rail);
+// ---- hip roof (шатровая) with standing-seam metal, eave overhang, gutters and a front gable over the entrance ----
+box(ROOF,2*XO-.3,.25,ZF-ZB-.3,0,TOP+.12,(ZF+ZB)/2,M.slab);   // top plate / attic floor
+const seamTex=ctex(256,256,(g,w,h)=>{g.fillStyle='#3a3e44';g.fillRect(0,0,w,h);for(let x=0;x<w;x+=64){g.fillStyle='#50555c';g.fillRect(x,0,6,h);g.fillStyle='#2a2d32';g.fillRect(x+6,0,3,h);}
+ for(let i=0;i<300;i++){g.fillStyle=`rgba(255,255,255,${rnd(i)*.03})`;g.fillRect(rnd(i+1)*w,rnd(i+2)*h,20,1);}});seamTex.wrapS=seamTex.wrapT=THREE.RepeatWrapping;seamTex.repeat.set(2,1);  // seam every 0.5 m
+const RM=new THREE.MeshStandardMaterial({map:seamTex,roughness:.38,metalness:.55,side:THREE.DoubleSide,envMapIntensity:1.1});
+const sofM=new THREE.MeshStandardMaterial({map:woodBoardTex,roughness:.7,side:THREE.DoubleSide});
+const OV=.65,E=TOP+.25,PITCH=Math.tan(25*Math.PI/180),ZC=(ZF+ZB)/2,HX=XO+OV,HZ=(ZF-ZB)/2+OV,RH=HZ*PITCH,RX=HX-HZ;
+function poly(pts,uvs,mat){const g=new THREE.BufferGeometry();const P=[],U=[];for(let i=1;i<pts.length-1;i++){for(const k of[0,i,i+1]){P.push(...pts[k]);U.push(...uvs[k]);}}
+ g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.computeVertexNormals();
+ const m=new THREE.Mesh(g,mat);m.castShadow=m.receiveShadow=true;ROOF.add(m);return m;}
+const SL=Math.hypot(HZ,RH);   // slope length
+for(const s of[1,-1]){ // front/back trapezoids, u along x, v up the slope
+ poly([[-HX,E,ZC+s*HZ],[HX,E,ZC+s*HZ],[RX,E+RH,ZC],[-RX,E+RH,ZC]],[[-HX,0],[HX,0],[RX,SL],[-RX,SL]],RM);
+ // hips: triangles, u along z
+ poly([[s*HX,E,ZC-HZ],[s*HX,E,ZC+HZ],[s*RX,E+RH,ZC]],[[-HZ,0],[HZ,0],[0,Math.hypot(HZ,RH)]],RM);}
+// ridge + hip caps
+const capM=new THREE.MeshStandardMaterial({color:'#2c2f34',roughness:.4,metalness:.6});
+function bar(a,b,r=.07,mat=capM){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b);const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,A.distanceTo(B),8),mat);
+ m.position.copy(A).add(B).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize());m.castShadow=true;ROOF.add(m);return m;}
+bar([-RX,E+RH+.03,ZC],[RX,E+RH+.03,ZC],.09);
+for(const sx of[-1,1])for(const sz of[-1,1])bar([sx*HX,E+.03,ZC+sz*HZ],[sx*RX,E+RH+.03,ZC]);
+// fascia + soffit (wood) around the eave
+for(const s of[1,-1]){box(ROOF,2*HX,.22,.05,0,E-.08,ZC+s*HZ,M.grid);box(ROOF,.05,.22,2*HZ,s*HX,E-.08,ZC,M.grid);
+ box(ROOF,2*HX,.03,OV,0,E-.18,ZC+s*(HZ-OV/2),sofM);box(ROOF,OV,.03,2*HZ-2*OV,s*(HX-OV/2),E-.18,ZC,sofM);}
+// gutters + downpipes
+const gutM=new THREE.MeshStandardMaterial({color:'#33363b',roughness:.35,metalness:.6});
+for(const s of[1,-1]){bar([-HX,E-.12,ZC+s*(HZ+.06)],[HX,E-.12,ZC+s*(HZ+.06)],.07,gutM);bar([s*(HX+.06),E-.12,ZC-HZ],[s*(HX+.06),E-.12,ZC+HZ],.07,gutM);}
+for(const sx of[-1,1])for(const sz of[-1,1]){const x=sx*(XO+.05),z=ZC+sz*(HZ-OV+.1);bar([x,E-.15,z+sz*.45],[x,E-.6,z],.05,gutM);bar([x,E-.6,z],[x,.25,z],.05,gutM);}
+// snow guards on front/back slopes
+for(const s of[1,-1]){const d=.9,y=E+d*PITCH,z=ZC+s*(HZ-d);bar([-HX+d+.3,y+.12,z],[HX-d-.3,y+.12,z],.025,gutM);bar([-HX+d+.3,y+.06,z],[HX-d-.3,y+.06,z],.025,gutM);}
+// front gable over the entrance volume (cross gable)
+const GW=3.0,GZ=7.95,GH=GW*Math.tan(38*Math.PI/180),GIN=1.5;
+for(const s of[-1,1]){const gl=Math.hypot(GW,GH);poly([[s*GW,E,GZ+.25],[s*GW,E,GIN],[0,E+GH,GIN],[0,E+GH,GZ+.25]],[[0,0],[GZ+.25-GIN,0],[GZ+.25-GIN,gl],[0,gl]].map(([u,v])=>[v,u]),RM);}
+bar([0,E+GH+.03,GIN],[0,E+GH+.03,GZ+.25],.08);
+for(const s of[-1,1]){bar([s*GW,E-.02,GZ+.25],[0,E+GH-.02,GZ+.25],.06,M.grid);bar([s*(GW+.06),E-.12,GZ+.25],[s*(GW+.06),E-.12,HZ+ZC-.1],.06,gutM);}
+{const sh=new THREE.Shape();sh.moveTo(-2.72,TOP);sh.lineTo(2.72,TOP);sh.lineTo(2.72,E);sh.lineTo(0,E+GH-.18);sh.lineTo(-2.72,E);sh.lineTo(-2.72,TOP);
+ const ped=new THREE.Mesh(new THREE.ShapeGeometry(sh),M.core);ped.position.z=7.74;ped.castShadow=true;ROOF.add(ped);
+ // round gable window
+ const ow=new THREE.Mesh(new THREE.RingGeometry(.42,.52,32),M.frame);ow.position.set(0,E+GH*.42,7.76);ROOF.add(ow);
+ const og=new THREE.Mesh(new THREE.CircleGeometry(.42,32),M.glass);og.position.set(0,E+GH*.42,7.755);ROOF.add(og);
+ box(ROOF,.84,.04,.02,0,E+GH*.42,7.765,M.frame);box(ROOF,.04,.84,.02,0,E+GH*.42,7.765,M.frame);}
+// two vent stacks through the roof
+for(const x of[-6,6]){box(ROOF,.5,1.3,.5,x,E+RH*.55+.4,ZC-2.6,M.grid);box(ROOF,.62,.06,.62,x,E+RH*.55+1.07,ZC-2.6,capM);}
+
 // canopy + steps + downlight
 box(bld,3.4,.1,1.2,0,F2-.25,8.3,M.dark);for(const sx of[-1.5,1.5]){const rd=box(bld,.03,1.35,.03,sx,F2+.35,8.3,M.rail);rd.rotation.x=-.75;}
 box(bld,.25,.03,.25,0,F2-.31,8.2,M.lamp,false);
@@ -361,10 +397,10 @@ const portrait=()=>innerWidth<innerHeight;
 let tween=null;
 function flyTo(pos,tgt,k=portrait()?1.8:1){const t=new THREE.Vector3(...tgt),p=new THREE.Vector3(...pos).sub(t).multiplyScalar(k).add(t);
  if(reduce){cam.position.copy(p);ctl.target.copy(t);return;}tween={t:0,st:performance.now(),p0:cam.position.clone(),p1:p,q0:ctl.target.clone(),q1:t};}
-const VIEWS={facade:[[16,7,27],[0,3.4,0]],frame:[[-22,13,20],[0,3,0]],f1:[[4,24,16],[0,F1,0]],f2:[[4,27,16],[0,F2,0]]};
+const VIEWS={facade:[[17,8,30],[0,4.3,0]],frame:[[-22,13,20],[0,3,0]],f1:[[4,24,16],[0,F1,0]],f2:[[4,27,16],[0,F2,0]]};
 cam.position.set(...VIEWS.facade[0]);ctl.target.set(...VIEWS.facade[1]);if(portrait())cam.position.sub(ctl.target).multiplyScalar(1.8).add(ctl.target);
 
-const LEG={facade:'<b>Фасад как на фото:</b> вертикальная доска под светлое дерево, графитовое обрамление и пояса, рейки в простенках, тёмный каменный цоколь, плоская кровля с карнизом.',
+const LEG={facade:'<b>Фасад как на фото:</b> вертикальная доска под светлое дерево, графитовое обрамление и пояса, рейки в простенках, тёмный каменный цоколь, шатровая кровля из фальцевого металла с фронтоном над подъездом.',
  frame:'<b>Конструктив:</b> стальные колонны по контуру, в углах и у подъезда, ригели на каждом перекрытии, связи жёсткости в торцах. Стены — SIP-панели 174 мм. Ленточный фундамент с ростверком.',
  f1:'<b>1 этаж — квартиры 1–5.</b> Выберите квартиру и комнату или нажмите на пол. Подъезд: тамбур, лестница 1,2 м.',
  f2:'<b>2 этаж — квартиры 6–10.</b> Выберите квартиру и комнату или нажмите на пол.'};
@@ -374,7 +410,7 @@ function markRoom(rm,on){if(!rm)return;rm.mesh.material.emissive=on?hl:new THREE
 function setLimits(){if(eye){ctl.minDistance=.01;ctl.maxDistance=1;ctl.minPolarAngle=.9;ctl.maxPolarAngle=2.2;ctl.enableZoom=false;ctl.rotateSpeed=-.35;}else{ctl.minDistance=3;ctl.maxDistance=90;ctl.minPolarAngle=0;ctl.maxPolarAngle=1.48;ctl.enableZoom=true;ctl.rotateSpeed=1;}
  cam.fov=eye?72:(innerWidth<innerHeight?56:38);cam.updateProjectionMatrix();}
 function applyVis(){const lv=mode==='f1'?0:mode==='f2'?1:-1;
- L[1].visible=mode!=='f1';ROOF.visible=mode==='facade'||mode==='frame';WIN.visible=mode!=='frame';CLAD.visible=mode!=='frame';
+ L[1].visible=mode!=='f1';ROOF.visible=mode==='facade';WIN.visible=mode!=='frame';CLAD.visible=mode!=='frame';
  INT.forEach(g=>g.visible=mode!=='frame');STR.visible=FND.visible=mode==='frame';M.grass.opacity=mode==='frame'?.45:1;M.grass.depthWrite=mode!=='frame';
  if(mode==='frame'){M.ext.map=osbTex;M.ext.transparent=true;M.ext.opacity=.22;M.ext.depthWrite=false;M.inset.transparent=true;M.inset.opacity=.22;M.inset.depthWrite=false;}
  else{const ph=facade==='photo';M.ext.map=ph?woodBoardTex:marbleTex;M.ext.bumpMap=ph?woodBoardTex:marbleTex;M.ext.roughness=ph?.65:.32;M.inset.map=ph?slatTex:beigeTex;M.inset.bumpMap=ph?slatTex:null;M.core.map=ph?woodBoardTex:beigeTex;
